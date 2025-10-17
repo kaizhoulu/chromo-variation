@@ -2169,7 +2169,20 @@
                 const selectedValue = document.getElementById('chromosome-set').value;
                 if (selectedValue === '46') {
                     // 特纳综合征必须限定在23号性染色体上（45,X）
-                    validationResult = hasOne && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize && monosomyPair === 22;
+                    // 检查23号染色体的具体组成是否为X
+                    const sexChromosomes = [];
+                    document.querySelectorAll('#interactive-cell .chromosome').forEach(chromo => {
+                        if (parseInt(chromo.dataset.pair) === 22) {
+                            sexChromosomes.push(chromo.dataset.gender || ' ');
+                        }
+                    });
+                    // 必须是X组合：只有一个X染色体，没有Y染色体
+                    const xCount = sexChromosomes.filter(g => g === 'X').length;
+                    const yCount = sexChromosomes.filter(g => g === 'Y').length;
+                    const isX = xCount === 1 && yCount === 0;
+                    
+                    // 特纳综合征必须限定在23号性染色体上（45,X）
+                    validationResult = hasOne && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize && monosomyPair === 22 && isX;
                 } else {
                     // 其他情况允许任意染色体单体型
                     validationResult = hasOne && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize;
