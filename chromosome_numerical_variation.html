@@ -1,0 +1,3180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>染色体数目变异模拟器</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        .simulator-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+        }
+        .control-panel-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        .control-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 600px; /* 设置为与细胞框同宽 */
+            height: 140px;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .current-status {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .simulation-area {
+            display: flex;
+            gap: 20px;
+        }
+        .cell-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .results-container {
+            width: 100%;
+            max-width: 870px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            margin-top: 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .cell-diagram-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .cell-diagram {            width: 620px;            min-height: 400px;            height: fit-content;            border: 2px solid #333;            border-radius: 20px;            background-color: #f5f5f5;            box-shadow: 0 4px 8px rgba(0,0,0,0.1);            padding: 15px;            display: flex;            flex-wrap: wrap;            gap: 10px;            align-content: flex-start;            overflow: hidden;        }
+        .chromosome {
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s;
+            position: relative;
+            user-select: none;
+            margin: 5px;
+        }
+        .chromosome:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        .chromosome-body {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .chromosome-arm {
+            background-color: #3498db;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .centromere {
+            width: 9.6px;
+            height: 9.6px;
+            background-color: #d3d3d3;
+            border-radius: 50%;
+            z-index: 2;
+            border: 3.2px solid #bebebe;
+        }
+        .chromosome-label {
+            font-size: 9.6px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #2c3e50;
+        }
+        .chromosome-outside {
+            opacity: 0.7;
+        }
+        .action-buttons {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .action-buttons h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .euploidy {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .euploidy:hover {
+            background-color: #27ae60;
+        }
+        .reset-btn {
+            background-color: #FF8C00;
+            color: white;
+        }
+        .reset-btn:hover {
+            background-color: #E67E00;
+        }
+        .result-display {
+            width: 200px;
+            padding: 15px;
+            border: 5px solid #333;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            margin-right: 20px;
+            height: fit-content;
+        }
+        
+        .normal-cell-container {
+            width: 220px;
+            padding: 0 15px 15px 15px;
+            background-color: transparent;
+            margin-top: 10px;
+            margin-right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .normal-cell-diagram {
+            width: 100%;
+            max-width: 300px;
+            min-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-content: flex-start;
+            padding: 10px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .normal-cell-title {
+            text-align: center;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 10px;
+        }
+        
+        .static-chromosome {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            user-select: none;
+            margin: 2px;
+        }
+        
+        .result-display #variation-type, 
+        .result-display #chromosome-composition {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .verification-result {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        
+        .chromosome-pool {
+            width: 370px;
+            min-height: 400px;
+            height: fit-content;
+            border: 2px dashed #666;
+            border-radius: 10px;
+            background-color: #dfdfdf;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 10px;
+            margin-left: 20px;
+            position: relative;
+        }
+        .status-panel {
+            width: 250px; /* 设置为与染色体池同宽 */
+            height: 140px;
+            overflow: hidden; /* 确保内容不溢出 */
+        }
+        .status-panel .result-display {
+            border: none; /* 移除多余的边框 */
+            width: 100%;
+            padding: 0;
+        }
+        
+        .complete-btn {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .complete-btn:hover {
+            background-color: #2980b9;
+        }
+        #variation-type, #chromosome-composition {
+            font-weight: bold;
+            font-size: 1.2em;
+            padding: 8px 15px;
+            background-color: #f9f9f9;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 5px;
+        }
+        #variation-type {
+            color: #2c3e50;
+            border: none;
+        }
+        .variation-normal {
+            color: #2c3e50;
+            border-color: #3498db;
+        }
+        .variation-euploidy {
+            color: #27ae60;
+            border-color: #2ecc71;
+            font-weight: bold;
+            font-size: 1.2em;
+            padding: 5px 10px;
+            background-color: #eafaf1;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .variation-aneuploidy {
+            color: #c0392b;
+            border-color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.2em;
+            padding: 5px 10px;
+            background-color: #fadbd8;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .variation-buttons-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .subbuttons-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .variation-type-btn {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .variation-type-btn:hover {
+            background-color: #45a049;
+        }
+
+        .variation-subbtn {
+            padding: 6px 12px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background-color 0.3s;
+        }
+
+        .variation-subbtn:hover {
+            background-color: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="page-title" style="color: #2c3e50; text-align: center; margin-bottom: 30px;">染色体数目变异模拟器</h1>
+    
+    <div class="simulator-container">
+        <!-- 控制面板和状态面板容器 -->
+        <div class="control-panel-wrapper" style="display: flex; gap: 20px; width: 1050px;">
+            <!-- 控制面板 -->
+            <div class="control-panel" style="display: flex; flex-direction: row; align-items: flex-start; justify-content: flex-start; width: 720px; padding: 15px; flex-wrap: nowrap; gap: 40px;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 10px; width: 250px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                        <label for="chromosome-set">I. 选择细胞类型并组装染色体: </label>
+                        <button id="stage1-help-btn" style="display: none; width: 20px; height: 20px; background-color: #3d3d3d; color: white; border: none; border-radius: 3px; font-size: 16px; font-weight: bold; margin-left: 5px; cursor: pointer; line-height: 16px; vertical-align: middle; padding: 0;">?</button>
+                    </div>
+                    <div id="chromosome-set-buttons" style="margin-top: 5px;">
+                        <!-- 第一行 -->
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <button class="cell-type-btn" data-value="4">二倍体生物（2n=4）</button>
+                            <button class="cell-type-btn" data-value="8">果蝇（2n=8）</button>
+                        </div>
+                        <!-- 第二行 -->
+                        <div style="display: flex; gap: 8px;">
+                            <button class="cell-type-btn" data-value="tetraploid-8">四倍体生物（4n=8）</button>
+                            <button class="cell-type-btn" data-value="46">人类（2n=46）</button>
+                        </div>
+                    </div>
+                    <script>
+                    // 为按钮添加点击事件
+                    const buttons = document.querySelectorAll('.cell-type-btn');
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = 'chromosome-set';
+                    hiddenInput.value = '';
+                    document.querySelector('#chromosome-set-buttons').after(hiddenInput);
+
+                    buttons.forEach(button => {
+                        button.addEventListener('click', function() {
+                        // 移除所有按钮的选中状态
+                        buttons.forEach(btn => btn.classList.remove('selected'));
+                        // 添加当前按钮的选中状态
+                        this.classList.add('selected');
+                        // 更新隐藏输入字段的值
+                        hiddenInput.value = this.dataset.value;
+                        // 触发change事件
+                        const event = new Event('change');
+                        hiddenInput.dispatchEvent(event);
+                        });
+                    });
+
+                    // 添加按钮样式
+                    const style = document.createElement('style');
+                    style.textContent = `
+                    .cell-type-btn {
+                        padding: 6px 12px;
+                        border: 1px solid #ccc;
+                        border-radius: 4px;
+                        background-color: #fff;
+                        cursor: pointer;
+                    }
+                    .cell-type-btn:disabled {
+                        cursor: not-allowed;
+                        opacity: 0.5;
+                    }
+                    .cell-type-btn.selected {
+                        background-color: #4CAF50;
+                        color: white;
+                        border-color: #4CAF50;
+                    }
+                    `;
+                    document.head.appendChild(style);
+                    </script>
+                </div>
+                
+                <!-- 完成、重置按钮容器 -->
+                <div style="display: flex; flex-direction: column; margin-left: 5px; margin-top: 0px; width: 120px;">
+
+                    <button class="reset-btn" id="reset-btn" style="width: 100px; height: 40px; margin-bottom: 10px;">重置</button>
+                    <button class="complete-btn" id="complete-button" style="width: 100px; height: 40px; display: none;">完成</button>
+                </div>
+
+                <!-- 变异按钮总容器 - 垂直排列 -->
+                <div id="variation-buttons-wrapper" style="display: flex; flex-direction: column;  margin-left: -30px; margin-top: 0px; width: 220px;">
+                    
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <label for="chromosome-set" id="variation-type-label" style="display: none; margin: 0;">II. 选择并完成相应变异: </label>
+                        <button id="variation-help-btn" style="display: none; width: 20px; height: 20px; background-color: #3d3d3d; color: white; border: none; border-radius: 3px; font-size: 16px; font-weight: bold; margin-left: 5px; cursor: pointer; line-height: 16px; vertical-align: middle; padding: 0;">?</button>
+                    </div>
+                    
+                    <!-- 变异类型按钮容器 -->
+                    <div id="variation-buttons-container" class="variation-buttons-container" style="margin-top: -5px; display: none; width: 300px;">
+                        <button id="euploidy-btn" class="variation-type-btn">整倍体变异</button>
+                        <button id="aneuploidy-btn" class="variation-type-btn">非整倍体变异</button>
+                    </div>
+
+                    <!-- 整倍体变异下位按钮容器 -->
+                    <div id="euploidy-subbuttons" class="subbuttons-container" style="margin-top: 10px;  margin-left: -10px; display: none; width: 300px;">
+                        <button id="haploid-btn" class="variation-subbtn">单倍体 (n)</button>
+                        <button id="triploid-btn" class="variation-subbtn">三倍体 (3n)</button>
+                        <button id="tetraploid-btn" class="variation-subbtn">四倍体 (4n)</button>
+                    </div>
+
+                    <!-- 非整倍体变异下位按钮容器 -->
+                    <div id="aneuploidy-subbuttons" class="subbuttons-container" style="margin-top: 10px; display: none; width: 410px;">
+                        <button id="trisomy-btn" class="variation-subbtn">2n+1</button>
+                        <button id="monosomy-btn" class="variation-subbtn">2n-1</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 状态面板 -->
+            <div class="control-panel" style="display: flex; flex-direction: row; align-items: flex-start; justify-content: flex-start; flex: 1; padding: 15px; flex-wrap: nowrap; gap: 40px;">
+                 <div id="variation-result-details" style="display: block;">
+                        <p style="margin: 0px 0; display: inline-block; vertical-align: middle;">结果验证：</p>
+                            <div id="verification-result" class="verification-result" style="font-size: 18px; font-weight: bold; margin: 0px 0; color: #888888; display: inline-block; vertical-align: middle;">未完成</div>
+                        <p style="margin: 15px 0;">变异类型: <span id="variation-type" class="variation-normal"  style="font-size: 18px; font-weight: bold; margin: 0px 0; color: #888888; display: inline-block; vertical-align: middle;">无变异</span></p>
+                        <p style="margin: -5px 0;">染色体组成: <span id="chromosome-composition"  style="font-size: 18px; font-weight: bold; margin: 0px 0; color: #888888; display: inline-block; vertical-align: middle;">2n=20</span></p>
+                    </div>
+            </div>
+        </div>
+        
+        <!-- 模拟区 -->
+        <div class="simulation-area">
+            <!-- 结果展示 - 移到细胞图左侧 -->
+            <div class="results-column">                <div class="normal-cell-container" id="normal-cell-container" style="display: none;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <button id="reset-state-a" class="reset-btn" style="margin-top: -10px; padding: 5px 10px; font-size: 12px;">恢复</button>
+                    <div class="normal-cell-title" style="margin-top: -5px;">正常细胞</div>
+                </div>
+                <div class="normal-cell-diagram" id="normal-cell-diagram"></div>
+            </div>            </div>
+            
+            <div class="cell-container">
+                <!-- 可交互的细胞图和染色体池容器 -->
+                <div class="cell-diagram-container">
+                    <div class="cell-diagram" id="interactive-cell">
+                        <!-- 染色体将通过JS动态生成 -->
+                    </div>
+                    
+                    <div class="chromosome-pool" id="chromosome-pool">
+                <!-- 染色体将通过JS动态生成 -->
+            </div>
+                </div>
+            </div>
+            
+            <!-- 操作按钮区已移除 -->
+        </div>
+        
+        <!-- 验证结果已移至左侧结果区域 -->
+        
+        <div id="variation-module" class="mt-5" style="display: none;">
+            <h3>染色体数目变异</h3>
+            <p>如果该正常细胞发生染色体数目变异，细胞内染色体组成会发生什么变化？</p>
+            
+            <div id="variation-type-selection" class="mt-3">
+                <button id="euploidy-btn" class="btn btn-secondary mr-2">整倍体变异</button>
+                <button id="aneuploidy-btn" class="btn btn-secondary">非整倍体变异</button>
+            </div>
+            
+            <div id="euploidy-options" class="mt-3" style="display: none;">
+                <button id="triploid-btn" class="btn btn-info mr-2">三倍体</button>
+                <button id="tetraploid-btn" class="btn btn-info mr-2">四倍体</button>
+                <button id="haploid-btn" class="btn btn-info">单倍体</button>
+            </div>
+            
+            <div id="aneuploidy-options" class="mt-3" style="display: none;">
+                <button id="minus-one-btn" class="btn btn-info mr-2">2n-1</button>
+                <button id="plus-one-btn" class="btn btn-info">2n+1</button>
+            </div>
+            
+            <div id="variation-instructions" class="mt-3"></div>
+            <button id="variation-complete-btn" class="btn btn-primary mt-3" style="display: none;">完成变异</button>
+            <div id="variation-result" class="mt-2"></div>
+            <button id="back-to-variation-selection" class="btn btn-secondary mt-3" style="display: none;">返回选择其他变异类型</button>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let baseChromosomeCount = 20;
+        let currentChromosomes = [];
+        let nextId = 0;
+        let isDragging = false;
+        let dragElement = null;
+        let startX, startY;
+        let selectedChromosomePair = null; // 选中的染色体对编号
+        let selectedVariationType = null; // 记录用户选择的变异类型，初始为未选择
+        
+        // 染色体尺寸配置 - 为四个分支创建独立的配置
+        const chromosomeConfigs = {
+            // 二倍体生物（2n=4）配置
+            '4': [
+                { pair: 0, shortArm: 30, longArm: 60, color: "#3498db", darkColor: "#2980b9", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 1, shortArm: 25, longArm: 70, color: "#e74c3c", darkColor: "#c0392b", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 2, shortArm: 35, longArm: 80, color: "#2ecc71", darkColor: "#27ae60", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 3, shortArm: 20, longArm: 50, color: "#f39c12", darkColor: "#d35400", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 4, shortArm: 30, longArm: 60, color: "#3498db", darkColor: "#2980b9", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 5, shortArm: 25, longArm: 70, color: "#e74c3c", darkColor: "#c0392b", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 6, shortArm: 35, longArm: 80, color: "#2ecc71", darkColor: "#27ae60", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 7, shortArm: 20, longArm: 50, color: "#f39c12", darkColor: "#d35400", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }
+            ],
+            
+            // 果蝇（2n=8）配置 - 按实际长度比例调整，性染色体编为1号
+            '8': [
+                { pair: 0, shortArm: 35, longArm: 75, color: "#e67e22", darkColor: "#d35400", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // X染色体 (性染色体，编为1号)
+                { pair: 1, shortArm: 45, longArm: 95, color: "#9b59b6", darkColor: "#8e44ad", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 第2号染色体 (最大)
+                { pair: 2, shortArm: 40, longArm: 90, color: "#1abc9c", darkColor: "#16a085", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 第3号染色体 (第二大)
+                { pair: 3, shortArm:  0, longArm:  0, color: "#f1c40f", darkColor: "#f39c12", centromereBg: "#d3d3d3", centromereBorder: "#ffd82a" }, // 第4号染色体 (点状染色体，最小)
+                { pair: 4, shortArm: 30, longArm: 70, color: "#ff6b6b", darkColor: "#ee5253", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // Y染色体 (性染色体同源染色体)
+                { pair: 5, shortArm: 45, longArm: 95, color: "#95a5a6", darkColor: "#7f8c8d", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 第2号同源染色体
+                { pair: 6, shortArm: 40, longArm: 90, color: "#34495e", darkColor: "#2c3e50", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 第3号同源染色体
+                { pair: 7, shortArm:  0, longArm:  0, color: "#48dbfb", darkColor: "#0abde3", centromereBg: "#d3d3d3", centromereBorder: "#ffd82a" } // 第4号同源染色体
+            ],
+            
+            // 四倍体生物（4n=8）配置
+            'tetraploid-8': [
+                { pair: 0, shortArm: 35, longArm: 65, color: "#1dd1a1", darkColor: "#10ac84", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 1, shortArm: 30, longArm: 55, color: "#5f27cd", darkColor: "#341f97", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 2, shortArm: 20, longArm: 50, color: "#ff9ff3", darkColor: "#ff6b81", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 3, shortArm: 30, longArm: 45, color: "#54a0ff", darkColor: "#2e86de", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 4, shortArm: 25, longArm: 60, color: "#10ac84", darkColor: "#1dd1a1", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 5, shortArm: 35, longArm: 50, color: "#ff9f43", darkColor: "#ee5253", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 6, shortArm: 40, longArm: 65, color: "#ee5253", darkColor: "#ff6b6b", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 7, shortArm: 20, longArm: 45, color: "#0abde3", darkColor: "#48dbfb", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 8, shortArm: 35, longArm: 65, color: "#1dd1a1", darkColor: "#10ac84", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair: 9, shortArm: 30, longArm: 55, color: "#5f27cd", darkColor: "#341f97", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair:10, shortArm: 20, longArm: 50, color: "#ff9ff3", darkColor: "#ff6b81", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair:11, shortArm: 30, longArm: 45, color: "#54a0ff", darkColor: "#2e86de", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair:12, shortArm: 25, longArm: 60, color: "#10ac84", darkColor: "#1dd1a1", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair:13, shortArm: 35, longArm: 50, color: "#ff9f43", darkColor: "#ee5253", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair:14, shortArm: 40, longArm: 65, color: "#ee5253", darkColor: "#ff6b6b", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" },
+                { pair:15, shortArm: 20, longArm: 45, color: "#0abde3", darkColor: "#48dbfb", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }
+            ],
+            
+            // 人类（2n=46）配置 - 根据实际染色体长度比例调整
+            '46': [
+                { pair: 0, shortArm: 40, longArm: 95, color: "#3498db", darkColor: "#2980b9", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 1号染色体 (最长)
+                { pair: 1, shortArm: 40, longArm: 90, color: "#e74c3c", darkColor: "#c0392b", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 2号染色体 (次长)
+                { pair: 2, shortArm: 35, longArm: 85, color: "#2ecc71", darkColor: "#27ae60", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 3号染色体
+                { pair: 3, shortArm: 30, longArm: 80, color: "#f39c12", darkColor: "#d35400", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 4号染色体
+                { pair: 4, shortArm: 30, longArm: 75, color: "#9b59b6", darkColor: "#8e44ad", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 5号染色体
+                { pair: 5, shortArm: 30, longArm: 75, color: "#1abc9c", darkColor: "#16a085", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 6号染色体
+                { pair: 6, shortArm: 30, longArm: 70, color: "#e67e22", darkColor: "#d35400", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 7号染色体
+                { pair: 7, shortArm: 30, longArm: 70, color: "#95a5a6", darkColor: "#7f8c8d", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 8号染色体
+                { pair: 8, shortArm: 30, longArm: 65, color: "#34495e", darkColor: "#2c3e50", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 9号染色体
+                { pair: 9, shortArm: 25, longArm: 65, color: "#ff6b6b", darkColor: "#ee5253", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 10号染色体
+                { pair: 10, shortArm: 25, longArm: 65, color: "#48dbfb", darkColor: "#0abde3", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 11号染色体
+                { pair: 11, shortArm: 25, longArm: 65, color: "#1dd1a1", darkColor: "#10ac84", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 12号染色体
+                { pair: 12, shortArm: 25, longArm: 60, color: "#5f27cd", darkColor: "#341f97", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 13号染色体
+                { pair: 13, shortArm: 25, longArm: 60, color: "#ff9ff3", darkColor: "#ff6b81", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 14号染色体
+                { pair: 14, shortArm: 25, longArm: 55, color: "#54a0ff", darkColor: "#2e86de", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 15号染色体
+                { pair: 15, shortArm: 25, longArm: 55, color: "#10ac84", darkColor: "#1dd1a1", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 16号染色体
+                { pair: 16, shortArm: 25, longArm: 55, color: "#ff9f43", darkColor: "#ee5253", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 17号染色体
+                { pair: 17, shortArm: 20, longArm: 50, color: "#ee5253", darkColor: "#ff6b6b", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 18号染色体
+                { pair: 18, shortArm: 20, longArm: 45, color: "#0abde3", darkColor: "#48dbfb", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 19号染色体 (较小)
+                { pair: 19, shortArm: 20, longArm: 45, color: "#00d2d3", darkColor: "#00a8ff", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 20号染色体
+                { pair: 20, shortArm: 15, longArm: 35, color: "#ff6b6b", darkColor: "#ff9ff3", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 21号染色体 (比22号短)
+                { pair: 21, shortArm: 20, longArm: 40, color: "#f1c40f", darkColor: "#f39c12", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // 22号染色体
+                { pair: 22, shortArm: 30, longArm: 70, color: "#2e86de", darkColor: "#54a0ff", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }, // X染色体 (为特殊染色体保留，长度介于7-8号之间)
+                { pair: 23, shortArm: 10, longArm: 35, color: "#ff9ff3", darkColor: "#ee5253", centromereBg: "#d3d3d3", centromereBorder: "#bebebe" }  // Y染色体 (最短，用于特殊染色体)
+            ]
+        };
+        
+        // 全局变量，跟踪当前选择的染色体分支
+        let currentChromosomeSet = '46'; // 默认使用人类配置
+        
+        // 第一阶段完成验证成功计数器
+        let stage1SuccessCounters = {
+            '4': 0,    // 二倍体生物（2n=4）
+            '8': 0,    // 果蝇（2n=8）
+            'tetraploid-8': 0, // 四倍体生物（4n=8）
+            '46': 0    // 人类（2n=46）
+        };
+        
+        // 更新当前染色体分支
+        function updateCurrentChromosomeSet(setValue) {
+            currentChromosomeSet = setValue;
+        }
+        
+        // 获取当前分支的染色体配置
+        function getChromosomeConfig(configIndex, gender = ' ') {
+            // 默认使用人类配置
+            const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+            const baseConfig = configs[configIndex % configs.length];
+            
+            // 检查是否有基于性别的特殊配置
+            if (gender === 'X' || gender === 'Y') {
+                // 对于人类23号染色体(X/Y)
+                if (currentChromosomeSet === '46' && configIndex === 22) {
+                    // 返回X/Y染色体的特定配置
+                    if (gender === 'X') {
+                        return {
+                            pair: baseConfig.pair,
+                            shortArm: 40,  // X染色体稍长
+                            longArm: 80,
+                            color: '#8e44ad',  // X染色体使用紫色系
+                            darkColor: '#703688',
+                            centromereBg: baseConfig.centromereBg || '#d3d3d3',
+                            centromereBorder: baseConfig.centromereBorder || '#bebebe'
+                        };
+                    } else if (gender === 'Y') {
+                        return {
+                            pair: baseConfig.pair,
+                            shortArm: 25,  // Y染色体较短
+                            longArm: 50,
+                            color: '#2980b9',  // Y染色体使用蓝色系
+                            darkColor: '#1f668d',
+                            centromereBg: baseConfig.centromereBg || '#d3d3d3',
+                            centromereBorder: baseConfig.centromereBorder || '#bebebe'
+                        };
+                    }
+                }
+                // 对于果蝇4号染色体(如果需要特殊处理)
+                else if (currentChromosomeSet === '8' && configIndex === 0) {
+                    // 果蝇性染色体配置
+                    return {
+                        pair: baseConfig.pair,
+                        shortArm: gender === 'X' ? 15 : 20,  // X稍长，Y较短
+                        longArm: gender === 'X' ? 30 : 40,
+                        color: gender === 'X' ? '#e74c3c' : '#3498db', // X红色，Y蓝色
+                        darkColor: gender === 'X' ? '#c0392b' : '#2980b9',
+                        centromereBg: baseConfig.centromereBg || '#d3d3d3',
+                        centromereBorder: baseConfig.centromereBorder || '#bebebe'
+                    };
+                }
+            }
+            
+            // 默认返回基础配置
+            return baseConfig;
+        }
+        
+        // DOM元素
+        const chromosomeSetSelect = document.getElementById('chromosome-set');
+        const interactiveCell = document.getElementById('interactive-cell');
+        const chromosomePool = document.getElementById('chromosome-pool');
+        const currentStatus = document.querySelector('.current-status');
+        const variationType = document.getElementById('variation-type');
+        const chromosomeComposition = document.getElementById('chromosome-composition');
+        const resetBtn = document.getElementById('reset-btn');
+        
+        // 全局变量用于金手指功能
+        let cheatCodeInput = '';
+
+        // 初始化函数
+        function initSimulator() {
+            baseChromosomeCount = 0;
+            renderEmptyCellDiagram();
+            updateStatusDisplay();
+
+            // 添加金手指功能：监听键盘输入
+            document.addEventListener('keydown', function(e) {
+                // 仅在第一阶段（请先选择染色体组成(2n)后）启用金手指
+                if (baseChromosomeCount > 0 && document.getElementById('variation-buttons-container').style.display !== 'flex') {
+                    // 记录按键
+                    cheatCodeInput += String.fromCharCode(e.keyCode).toLowerCase();
+                    // 限制输入长度，防止内存溢出
+                    if (cheatCodeInput.length > 10) {
+                        cheatCodeInput = cheatCodeInput.substring(1);
+                    }
+                    // 检查是否输入了'okay'
+                    if (cheatCodeInput.includes('ok')) {
+
+                        // 触发金手指功能
+                        autoCompleteFirstStage();
+                        // 重置输入
+                        cheatCodeInput = '';
+                    }
+                }
+            });
+
+            // 添加事件监听器
+            chromosomeSetSelect.addEventListener('change', function() {
+                // 保存用户选择的值
+                const selectedValue = this.value;
+                
+                // 先调用重置
+                resetBtn.click();
+                
+                // 恢复用户选择的值
+                this.value = selectedValue;
+                
+                // 处理四倍体特殊情况
+                updateCurrentChromosomeSet(selectedValue);
+                if (selectedValue === 'tetraploid-8') {
+                    baseChromosomeCount = 8;
+                    // 直接调用自定义的四倍体渲染函数
+                    renderTetraploidCellDiagram();
+                    document.getElementById('complete-button').style.display = 'block';
+                    // 如果四倍体生物分支的计数器大于等于1，创建一键模拟按钮
+                    if (stage1SuccessCounters[selectedValue] >= 1) {
+                        createOneClickSimulateButton();
+                    }                    
+                } else if (selectedValue === '4') {
+                    baseChromosomeCount = 4;
+                    // 直接调用自定义的二倍体渲染函数
+                    renderTetraploidCellDiagram();
+                    document.getElementById('complete-button').style.display = 'block';
+                    // 如果四倍体生物分支的计数器大于等于1，创建一键模拟按钮
+                    if (stage1SuccessCounters[selectedValue] >= 1) {
+                        createOneClickSimulateButton();
+                    }
+                } else {
+                    baseChromosomeCount = parseInt(selectedValue);
+                    if (baseChromosomeCount > 0) {
+                        renderCellDiagram(baseChromosomeCount);
+                        // 显示完成按钮
+                        document.getElementById('complete-button').style.display = 'block';
+                        if (selectedValue === '8') {
+                            // 为果蝇显示问号帮助按钮
+                            document.getElementById('stage1-help-btn').style.display = 'inline-block';
+                        }
+                        // 如果选择的是2n=46（人类）、2n=4（二倍体生物）、2n=8（果蝇）或4n=8（四倍体生物），并且对应分支的计数器大于等于1，创建一键模拟按钮
+                        if (selectedValue === '46') {
+                            createOneClickSimulateButton();
+                        } else if ((selectedValue === '4' || selectedValue === '8' || selectedValue === 'tetraploid-8') && 
+                            stage1SuccessCounters[selectedValue] >= 1) {
+                            createOneClickSimulateButton();
+                        }
+
+                    } else {
+                        renderEmptyCellDiagram();
+                        // 隐藏完成按钮
+                        document.getElementById('complete-button').style.display = 'none';
+                    }
+                }
+                updateStatusDisplay();
+            });
+            
+            // 渲染四倍体细胞图
+            function renderTetraploidCellDiagram() {
+                interactiveCell.innerHTML = '';
+                chromosomePool.innerHTML = '';
+                currentChromosomes = [];
+                nextId = 0;
+
+                // 添加提示文本
+                const emptyMessage = document.createElement('div');
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.width = '100%';
+                emptyMessage.style.paddingTop = '200px';
+                emptyMessage.style.color = '#7f8c8d';
+                // 根据当前选择的生物分支显示不同的提示文本
+                if (currentChromosomeSet === '8') {
+                    emptyMessage.textContent = '提示：将右侧池内染色体拖入细胞框使其符合果蝇的染色体组成';
+                } else if (currentChromosomeSet === '46') {
+                    emptyMessage.textContent = '提示：将右侧池内染色体拖入细胞框使其符合人类的染色体组成';
+                } else if (currentChromosomeSet === '4') {
+                    emptyMessage.textContent = '提示：将右侧池内染色体拖入细胞框使其符合二倍体生物的染色体组成';
+                } else {
+                    emptyMessage.textContent = '提示：将右侧池内染色体拖入细胞框使其符合四倍体生物的染色体组成';
+                }
+                interactiveCell.appendChild(emptyMessage);
+
+                // 四倍体设置：4种颜色、长短不同的染色体，每种4条
+                const chromosomeCount = 16;
+                const chromosomeSetSize = 4; // 染色体组大小
+                const numSets = 4; // 染色体组数（四倍体）
+
+                // 计算需要额外添加的染色体数量(15%)
+                const extraChromosomes = Math.ceil(chromosomeCount * 0.15);
+                const totalChromosomesToCreate = chromosomeCount + extraChromosomes;
+
+                // 存储所有创建的染色体
+                const allChromosomes = [];
+
+                // 创建染色体元素
+                let createdCount = 0;
+
+                // 首先为每个pair创建足够的基础数量(等于染色体组数)
+                // 对于4n=8，染色体组数是4，所以每个pair创建4个
+                for(let pair = 0; pair < chromosomeSetSize; pair++) {
+                    for(let i = 0; i < numSets; i++) {
+                        if(createdCount >= totalChromosomesToCreate) break;
+
+                        // 获取当前配置数组的长度
+                        const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                        const configIndex = pair % configs.length;
+                        const chromo = createChromosome(pair, nextId, configIndex);
+                        chromo.classList.add('chromosome-outside');
+                        allChromosomes.push(chromo);
+                        nextId++;
+                        createdCount++;
+                    }
+                }
+
+                // 剩余的染色体随机选择pair
+                while(createdCount < totalChromosomesToCreate) {
+                    const pair = Math.floor(Math.random() * chromosomeSetSize);
+                    // 获取当前配置数组的长度
+                    const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                    const configIndex = pair % configs.length;
+                    const chromo = createChromosome(pair, nextId, configIndex);
+                    chromo.classList.add('chromosome-outside');
+                    allChromosomes.push(chromo);
+                    nextId++;
+                    createdCount++;
+                }
+
+                // 随机打乱染色体顺序
+                allChromosomes.sort(() => Math.random() - 0.5);
+
+                // 将染色体添加到染色体池
+                allChromosomes.forEach(chromo => {
+                    chromosomePool.appendChild(chromo);
+                });
+            };
+
+            // 重置按钮
+
+            // 创建一键模拟按钮
+            function createOneClickSimulateButton() {
+                // 先移除已有的按钮（如果存在）
+                const existingButton = document.getElementById('one-click-simulate');
+                if (existingButton) {
+                    existingButton.remove();
+                }
+
+                // 创建新按钮
+                const oneClickButton = document.createElement('button');
+                oneClickButton.id = 'one-click-simulate';
+                oneClickButton.textContent = '一键组装';
+                oneClickButton.style.width = '100px';
+                oneClickButton.style.height = '40px';
+                oneClickButton.style.marginTop = '10px';
+                oneClickButton.style.backgroundColor = '#4CAF50';
+                oneClickButton.style.color = 'white';
+                oneClickButton.style.border = 'none';
+                oneClickButton.style.borderRadius = '4px';
+                oneClickButton.style.cursor = 'pointer';
+                oneClickButton.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+                oneClickButton.style.transition = 'background-color 0.3s';
+
+                // 添加点击事件
+                oneClickButton.addEventListener('click', function() {
+                    // 触发金手指功能
+                    autoCompleteFirstStage();
+                    // 隐藏按钮
+                    //this.style.display = 'none';
+                });
+
+                // 添加悬停效果
+                oneClickButton.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = '#45a049';
+                });
+
+                oneClickButton.addEventListener('mouseout', function() {
+                    this.style.backgroundColor = '#4CAF50';
+                });
+
+                // 添加到完成按钮的父容器中
+                const completeButton = document.getElementById('complete-button');
+                if (completeButton && completeButton.parentNode) {
+                    completeButton.parentNode.appendChild(oneClickButton);
+                }
+            }
+
+            // 隐藏一键模拟按钮
+            function hideOneClickSimulateButton() {
+                const oneClickButton = document.getElementById('one-click-simulate');
+                if (oneClickButton) {
+                    oneClickButton.style.display = 'none';
+                }
+            }
+
+            // 重置按钮
+            resetBtn.addEventListener('click', function(event) {
+                // 只有在直接点击重置按钮时（不是通过代码调用）才执行以下操作
+                if (event && event.isTrusted) {
+                    // 移除细胞类型按钮的所有选中状态
+                    const cellTypeButtons = document.querySelectorAll('.cell-type-btn');
+                    cellTypeButtons.forEach(btn => btn.classList.remove('selected'));
+                }
+                
+                // 重置染色体选择和细胞图
+                chromosomeSetSelect.value = '0';
+                baseChromosomeCount = 0;
+                renderEmptyCellDiagram();
+                updateStatusDisplay();
+
+                // 隐藏完成按钮
+                document.getElementById('complete-button').style.display = 'none';
+
+                // 隐藏一键模拟按钮
+                hideOneClickSimulateButton();
+
+                // 重置状态面板
+                const verificationResult = document.getElementById('verification-result');
+                const variationType = document.getElementById('variation-type');
+                const chromosomeComposition = document.getElementById('chromosome-composition');
+
+                verificationResult.textContent = '未完成';
+                verificationResult.style.color = '#888888';
+                variationType.textContent = '无变异';
+                variationType.className = 'variation-normal';
+                chromosomeComposition.textContent = '?n=?';
+
+                // 重置完成按钮的阶段状态
+                const variationResultDetails = document.getElementById('variation-result-details');
+                const variationButtonsContainer = document.getElementById('variation-buttons-container');
+                const normalCellContainer = document.getElementById('normal-cell-container');
+                const euploidySubbuttons = document.getElementById('euploidy-subbuttons');
+                const aneuploidySubbuttons = document.getElementById('aneuploidy-subbuttons');
+
+                // 不隐藏变异详情
+                // variationResultDetails.style.display = 'none';
+                // 隐藏正常细胞图
+                normalCellContainer.style.display = 'none';
+                // 隐藏变异类型标签和按钮容器
+                document.getElementById('variation-type-label').style.display = 'none';
+                variationButtonsContainer.style.display = 'none';
+                // 隐藏问号帮助按钮
+                document.getElementById('variation-help-btn').style.display = 'none';
+                document.getElementById('stage1-help-btn').style.display = 'none';
+                euploidySubbuttons.style.display = 'none';
+                aneuploidySubbuttons.style.display = 'none';
+                // 隐藏人类分支特有的下位按钮容器
+                if (document.getElementById('male-subbuttons')) {
+                    document.getElementById('male-subbuttons').style.display = 'none';
+                }
+                if (document.getElementById('female-subbuttons')) {
+                    document.getElementById('female-subbuttons').style.display = 'none';
+                }
+
+                // 初始化（清除）状态a
+                window.stateA = null;
+
+                // 重置选择的变异类型
+                selectedVariationType = null;
+            });
+
+            // 恢复按钮
+            document.getElementById('reset-state-a').addEventListener('click', function() {
+                if(!window.stateA) {
+                    alert('没有可恢复的状态，请先完成第一阶段并验证成功');
+                    return;
+                }
+                restoreStateA();
+                // 第二阶段中点击恢复按钮时，设置验证结果为灰色的'未完成'
+                const verificationResult = document.getElementById('verification-result');
+                verificationResult.textContent = '未完成';
+                verificationResult.style.color = '#888888';
+                verificationResult.style.fontWeight = 'normal';
+                
+                // 移除整倍体变异和非整倍体变异按钮及其所有下位按钮的选中状态（显示为灰色）
+                const euploidyBtn = document.getElementById('euploidy-btn');
+                const aneuploidyBtn = document.getElementById('aneuploidy-btn');
+                if (euploidyBtn && aneuploidyBtn) {
+                    euploidyBtn.style.backgroundColor = '#cccccc';
+                    euploidyBtn.style.color = '#666666';
+                    aneuploidyBtn.style.backgroundColor = '#cccccc';
+                    aneuploidyBtn.style.color = '#666666';
+                    
+                    // 移除所有下位按钮的选中状态
+                    const allSubbuttons = document.querySelectorAll('.variation-subbtn');
+                    allSubbuttons.forEach(btn => {
+                        btn.style.backgroundColor = '#cccccc';
+                        btn.style.color = '#666666';
+                    });
+                }
+                
+                // 隐藏所有变异类型的下位按钮容器，包括人类分支特有的容器
+                document.getElementById('euploidy-subbuttons').style.display = 'none';
+                document.getElementById('aneuploidy-subbuttons').style.display = 'none';
+                
+                // 隐藏人类分支特有的下位按钮容器
+                if (document.getElementById('male-subbuttons')) {
+                    document.getElementById('male-subbuttons').style.display = 'none';
+                }
+                if (document.getElementById('female-subbuttons')) {
+                    document.getElementById('female-subbuttons').style.display = 'none';
+                }
+                
+                // 隐藏问号帮助按钮
+                document.getElementById('variation-help-btn').style.display = 'none';
+            });
+
+            // 初始化拖拽功能
+            initDragAndDrop();
+        }
+
+        // 渲染空的细胞图和染色体池
+        function renderEmptyCellDiagram() {
+            interactiveCell.innerHTML = '';
+            chromosomePool.innerHTML = '';
+            currentChromosomes = [];
+            nextId = 0;
+
+            // 添加提示文本
+            const emptyMessage = document.createElement('div');
+            emptyMessage.style.textAlign = 'center';
+            emptyMessage.style.width = '100%';
+            emptyMessage.style.paddingTop = '200px';
+            emptyMessage.style.color = '#7f8c8d';
+            emptyMessage.textContent = '< 细胞框 >';
+            interactiveCell.appendChild(emptyMessage);
+
+            // 为染色体池添加提示文本
+            const poolEmptyMessage = document.createElement('div');
+            poolEmptyMessage.style.textAlign = 'center';
+            poolEmptyMessage.style.width = '100%';
+            poolEmptyMessage.style.paddingTop = '200px';
+            poolEmptyMessage.style.color = '#7f8c8d';
+            poolEmptyMessage.textContent = '< 染色体池 >';
+            chromosomePool.appendChild(poolEmptyMessage);
+
+            // 重置状态显示
+            variationType.textContent = '无变异';
+            variationType.className = 'variation-normal';
+            chromosomeComposition.textContent = '?n=?';
+
+            // 隐藏正常细胞图
+            document.getElementById('normal-cell-container').style.display = 'none';
+        }
+        
+        // 渲染细胞图
+        function renderCellDiagram(chromosomeCount) {
+            interactiveCell.innerHTML = '';
+            chromosomePool.innerHTML = '';
+            currentChromosomes = [];
+            nextId = 0;
+
+            // 添加提示文本
+                const emptyMessage = document.createElement('div');
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.width = '100%';
+                emptyMessage.style.paddingTop = '200px';
+                emptyMessage.style.color = '#7f8c8d';
+                // 根据当前选择的生物分支显示不同的提示文本
+                if (currentChromosomeSet === '8') {
+                    emptyMessage.textContent = '提示：将右侧池内染色体拖入细胞框使其符合果蝇的染色体组成';
+                } else if (currentChromosomeSet === '46') {
+                    emptyMessage.textContent = '提示：将右侧池内染色体拖入细胞框使其符合人类的染色体组成';
+                } else if (currentChromosomeSet === '4') {
+                    emptyMessage.textContent = '提示：将右侧池内染色体拖入细胞框使其符合二倍体生物的染色体组成';
+                } else {
+                    emptyMessage.textContent = '提示：将右侧池内染色体拖入细胞框使其符合四倍体生物的染色体组成';
+                }
+                interactiveCell.appendChild(emptyMessage);
+
+            const baseSet = parseInt(chromosomeSetSelect.value);
+            const chromosomeSetSize = baseSet / 2; // 染色体组大小
+            const numSets = chromosomeCount / chromosomeSetSize; // 染色体组数
+
+            // 计算需要额外添加的染色体数量(15%)
+            const extraChromosomes = Math.ceil(chromosomeCount * 0.15);
+            const totalChromosomesToCreate = chromosomeCount + extraChromosomes;
+
+            // 存储所有创建的染色体
+            const allChromosomes = [];
+
+            // 创建染色体元素
+            let createdCount = 0;
+
+            // 首先为每个pair创建足够的基础数量(等于染色体组数)
+            // 对于2n=6，染色体组数是2，所以每个pair创建2个
+            // 跟踪是否已经创建了X染色体
+            let hasXChromosome = false;
+            
+            for(let pair = 0; pair < chromosomeSetSize; pair++) {
+                for(let i = 0; i < numSets; i++) {
+                    if(createdCount >= totalChromosomesToCreate) break;
+
+                    const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                    const configIndex = pair % configs.length;
+                    // 为特殊染色体设置X/Y值
+                    let gender = ' ';
+                    if (isSpecialChromosome(baseSet, pair)) {
+                        // 确保至少有一个X染色体
+                        if (!hasXChromosome) {
+                            gender = 'X';
+                            hasXChromosome = true;
+                        } else {
+                            gender = Math.random() > 0.5 ? 'X' : 'Y';
+                        }
+                    }
+                    const chromo = createChromosome(pair, nextId, configIndex, gender);
+                    chromo.classList.add('chromosome-outside');
+                    allChromosomes.push(chromo);
+                    nextId++;
+                    createdCount++;
+                }
+            }
+
+            // 剩余的染色体随机选择pair
+            while(createdCount < totalChromosomesToCreate) {
+                const pair = Math.floor(Math.random() * chromosomeSetSize);
+                const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                const configIndex = pair % configs.length;
+                // 为特殊染色体设置X/Y值
+                let gender = ' ';
+                if (isSpecialChromosome(baseSet, pair)) {
+                    // 确保至少有一个X染色体
+                    if (!hasXChromosome) {
+                        gender = 'X';
+                        hasXChromosome = true;
+                    } else {
+                        gender = Math.random() > 0.5 ? 'X' : 'Y';
+                    }
+                }
+                const chromo = createChromosome(pair, nextId, configIndex, gender);
+                chromo.classList.add('chromosome-outside');
+                allChromosomes.push(chromo);
+                nextId++;
+                createdCount++;
+            }
+
+            // 随机打乱染色体顺序
+            allChromosomes.sort(() => Math.random() - 0.5);
+
+            // 将染色体添加到染色体池
+            allChromosomes.forEach(chromo => {
+                chromosomePool.appendChild(chromo);
+            });
+
+        }
+        
+        // 创建染色体元素
+        function createChromosome(pairNum, id, configIndex, gender = ' ') {
+            const config = getChromosomeConfig(configIndex, gender);
+            
+            const chromo = document.createElement('div');
+            chromo.className = 'chromosome';
+            chromo.dataset.id = id;
+            chromo.dataset.pair = pairNum;
+            chromo.dataset.gender = gender; // 添加性别属性
+            chromo.draggable = true;
+            
+            const chromoBody = document.createElement('div');
+            chromoBody.className = 'chromosome-body';
+            
+            const longArm = document.createElement('div');
+            longArm.className = 'chromosome-arm';
+            longArm.style.width = '16px'; // 缩放为原来的80%
+            longArm.style.height = `${config.longArm * 0.8}px`; // 缩放为原来的80%
+            longArm.style.backgroundColor = config.color;
+            longArm.style.borderRadius = '10px 10px 0 0';
+            
+            const centromere = document.createElement('div');
+            centromere.className = 'centromere';
+            centromere.style.backgroundColor = config.centromereBg || '#d3d3d3';
+            centromere.style.border = `3.2px solid ${config.centromereBorder || '#bebebe'}`;
+            
+            const shortArm = document.createElement('div');
+            shortArm.className = 'chromosome-arm';
+            shortArm.style.width = '16px'; // 缩放为原来的80%
+            shortArm.style.height = `${config.shortArm * 0.8}px`; // 缩放为原来的80%
+            shortArm.style.backgroundColor = config.color;
+            shortArm.style.borderRadius = '0 0 10px 10px';
+            
+            const label = document.createElement('div');
+            label.className = 'chromosome-label';
+            // 如果有性别属性(X/Y)，只显示性别字符，替换编号
+            if (gender === 'X' || gender === 'Y') {
+                label.textContent = gender;
+            } else {
+                label.textContent = pairNum + 1;
+            }
+            
+            chromoBody.appendChild(longArm);
+            chromoBody.appendChild(centromere);
+            chromoBody.appendChild(shortArm);
+            chromo.appendChild(chromoBody);
+            chromo.appendChild(label);
+            
+            // 添加拖拽事件
+            chromo.addEventListener('dragstart', handleDragStart);
+            chromo.addEventListener('mousedown', handleMouseDown);
+            
+            return chromo;
+        }
+        
+        // 添加特定染色体
+        function addChromosome(pairNum) {
+            // 获取当前配置数组的长度
+            const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+            const configIndex = pairNum % configs.length;
+            // 为人类23号染色体设置X/Y值
+            let gender = ' ';
+            const selectedValue = document.getElementById('chromosome-set').value;
+            if (selectedValue === '46' && pairNum === 22) { // human (2n=46) and 23rd chromosome (index 22)
+                gender = Math.random() > 0.5 ? 'X' : 'Y';
+            }
+            const chromo = createChromosome(pairNum, nextId, configIndex, gender);
+
+            // 添加到细胞末尾
+            interactiveCell.appendChild(chromo);
+
+            currentChromosomes.push(nextId);
+            nextId++;
+
+            // 整理染色体布局
+            organizeChromosomes();
+        }
+        
+        // 初始化拖拽功能
+        function initDragAndDrop() {
+            interactiveCell.addEventListener('dragover', handleDragOver);
+            interactiveCell.addEventListener('drop', handleDrop);
+            chromosomePool.addEventListener('dragover', handleDragOver);
+            chromosomePool.addEventListener('drop', handleDropPool);
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+        
+        // 拖拽处理函数
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.dataset.id);
+            setTimeout(() => {
+                e.target.classList.add('dragging');
+            }, 0);
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const element = document.querySelector(`[data-id="${id}"]`);
+
+            if(element && element.parentNode !== interactiveCell) {
+                // 添加到细胞末尾
+                interactiveCell.appendChild(element);
+
+                element.classList.remove('chromosome-outside');
+                currentChromosomes.push(parseInt(id));
+
+                // 整理染色体布局
+                organizeChromosomes();
+                updateStatusDisplay();
+            }
+        }
+        
+        function handleDropPool(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const element = document.querySelector(`[data-id="${id}"]`);
+            
+            if(element && element.parentNode !== chromosomePool) {
+                moveToPool(element);
+            }
+        }
+        
+        function moveToPool(element) {
+            chromosomePool.appendChild(element);
+            element.classList.add('chromosome-outside');
+            currentChromosomes = currentChromosomes.filter(id => id !== parseInt(element.dataset.id));
+            // 整理染色体池
+            organizeChromosomePool();
+            // 不更新状态显示，仅在完成按钮点击时更新
+        }
+
+        // 整理染色体池中的染色体
+        function organizeChromosomePool() {
+            // 获取所有染色体及其位置信息
+            const chromosomes = document.querySelectorAll('#chromosome-pool .chromosome');
+            const chromosomeData = [];
+
+            chromosomes.forEach(chromo => {
+                chromosomeData.push({
+                    element: chromo,
+                    // 保存原始位置信息
+                    rect: chromo.getBoundingClientRect()
+                });
+            });
+
+            // 清空染色体池
+            chromosomePool.innerHTML = '';
+
+            // 如果没有染色体，显示emptyMessage
+            if (chromosomeData.length === 0) {
+                const poolEmptyMessage = document.createElement('div');
+                poolEmptyMessage.className = 'empty-message';
+                poolEmptyMessage.style.cssText = 'text-align: center; color: #666; font-style: italic; margin: 20px;';
+                poolEmptyMessage.textContent = '染色体池';
+                chromosomePool.appendChild(poolEmptyMessage);
+                return;
+            }
+
+            // 创建一个容器来放置所有染色体
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.flexWrap = 'wrap';
+            container.style.gap = '10px';
+            container.style.margin = '5px';
+
+            // 按照原始顺序添加染色体
+            chromosomeData.forEach(data => {
+                const chromo = data.element;
+                container.appendChild(chromo);
+
+                // 恢复默认样式
+                chromo.style.position = 'static';
+                chromo.style.left = '0';
+                chromo.style.top = '0';
+            });
+
+            // 将容器添加到染色体池中
+            chromosomePool.appendChild(container);
+        }
+        
+        // 鼠标拖拽处理
+        function handleMouseDown(e) {
+            if(e.target.classList.contains('chromosome')) {
+                isDragging = true;
+                dragElement = e.target;
+                startX = e.clientX - e.target.getBoundingClientRect().left;
+                startY = e.clientY - e.target.getBoundingClientRect().top;
+                e.target.style.cursor = 'grabbing';
+                e.preventDefault();
+            }
+        }
+        
+        function handleMouseMove(e) {
+            if(!isDragging || !dragElement) return;
+            
+            const cellRect = interactiveCell.getBoundingClientRect();
+            
+            let x = e.clientX - startX;
+            let y = e.clientY - startY;
+            
+            dragElement.style.position = 'absolute';
+            dragElement.style.left = `${x}px`;
+            dragElement.style.top = `${y}px`;
+        }
+        
+        function handleMouseUp(e) {
+            if(!isDragging || !dragElement) return;
+
+            const cellRect = interactiveCell.getBoundingClientRect();
+            const poolRect = chromosomePool.getBoundingClientRect();
+            const elementRect = dragElement.getBoundingClientRect();
+
+            // 检查是否拖到了染色体池中
+            if(
+                elementRect.right > poolRect.left &&
+                elementRect.left < poolRect.right &&
+                elementRect.bottom > poolRect.top &&
+                elementRect.top < poolRect.bottom
+            ) {
+                // 拖到池中
+                moveToPool(dragElement);
+            } else {
+                // 放回细胞中
+                dragElement.style.position = 'static';
+                interactiveCell.appendChild(dragElement);
+
+                // 整理染色体布局
+                organizeChromosomes();
+            }
+
+            dragElement.style.cursor = 'grab';
+            isDragging = false;
+            dragElement = null;
+        }
+        
+        // 整理染色体布局，确保同源染色体成对并排
+        function organizeChromosomes() {
+            // 获取所有染色体及其位置信息
+            const chromosomes = document.querySelectorAll('#interactive-cell .chromosome');
+            const chromosomeData = [];
+
+            chromosomes.forEach(chromo => {
+                const rect = chromo.getBoundingClientRect();
+                const cellRect = interactiveCell.getBoundingClientRect();
+                chromosomeData.push({
+                    element: chromo,
+                    pairNum: chromo.dataset.pair,
+                    x: rect.left - cellRect.left,
+                    y: rect.top - cellRect.top
+                });
+            });
+
+            // 按对分组并保留原始位置信息
+            const pairs = {};
+            chromosomeData.forEach(data => {
+                if(!pairs[data.pairNum]) {
+                    pairs[data.pairNum] = [];
+                }
+                pairs[data.pairNum].push(data);
+            });
+
+            // 清空细胞
+            interactiveCell.innerHTML = '';
+
+            // 移除可能存在的高度限制
+            interactiveCell.style.height = 'fit-content';
+
+            // 按对重新添加染色体，确保同源染色体并排在一起
+            Object.keys(pairs).sort((a, b) => a - b).forEach(pairNum => {
+                const pairChromosomes = pairs[pairNum];
+
+                // 为每对染色体创建一个容器
+                const pairContainer = document.createElement('div');
+                pairContainer.className = 'chromosome-pair-container';
+                pairContainer.style.display = 'flex';
+                pairContainer.style.gap = '10px';
+                pairContainer.style.margin = '5px';
+
+                // 检查是否同时包含X和Y染色体
+                const hasX = pairChromosomes.some(data => data.element.dataset.gender === 'X');
+                const hasY = pairChromosomes.some(data => data.element.dataset.gender === 'Y');
+                
+                if (hasX && hasY) {
+                    // 如果同时存在X和Y，确保X在左，Y在右
+                    // 先添加X染色体
+                    pairChromosomes.forEach(data => {
+                        if (data.element.dataset.gender === 'X') {
+                            const chromo = data.element;
+                            pairContainer.appendChild(chromo);
+                            
+                            // 恢复原始位置
+                            chromo.style.position = 'static';
+                            chromo.style.left = '0';
+                            chromo.style.top = '0';
+                        }
+                    });
+                    
+                    // 再添加Y染色体
+                    pairChromosomes.forEach(data => {
+                        if (data.element.dataset.gender === 'Y') {
+                            const chromo = data.element;
+                            pairContainer.appendChild(chromo);
+                            
+                            // 恢复原始位置
+                            chromo.style.position = 'static';
+                            chromo.style.left = '0';
+                            chromo.style.top = '0';
+                        }
+                    });
+                    
+                    // 最后添加其他染色体（如有三体等情况）
+                    pairChromosomes.forEach(data => {
+                        if (data.element.dataset.gender !== 'X' && data.element.dataset.gender !== 'Y') {
+                            const chromo = data.element;
+                            pairContainer.appendChild(chromo);
+                            
+                            // 恢复原始位置
+                            chromo.style.position = 'static';
+                            chromo.style.left = '0';
+                            chromo.style.top = '0';
+                        }
+                    });
+                } else {
+                    // 按原始顺序添加染色体
+                    pairChromosomes.forEach(data => {
+                        const chromo = data.element;
+                        pairContainer.appendChild(chromo);
+
+                        // 恢复原始位置
+                        chromo.style.position = 'static';
+                        chromo.style.left = '0';
+                        chromo.style.top = '0';
+                    });
+                }
+
+                // 将容器添加到细胞中
+                interactiveCell.appendChild(pairContainer);
+            });
+
+            // 强制重绘以更新高度
+            interactiveCell.style.display = 'none';
+            void interactiveCell.offsetHeight; // 触发重绘
+            interactiveCell.style.display = 'flex';
+        }
+
+        // 更新状态显示 (仅更新控制面板状态，不更新变异结果)
+        function updateStatusDisplay() {
+            const currentCount = document.querySelectorAll('#interactive-cell .chromosome').length;
+            const baseSet = parseInt(chromosomeSetSelect.value);
+            const chromosomeSetSize = baseSet / 2; // 染色体组大小
+            const numSets = currentCount / chromosomeSetSize;
+
+            // 仅更新控制面板状态
+            if(numSets === 1) {
+                currentStatus.textContent = `当前: 单倍体 (n=${chromosomeSetSize})`;
+            } else if(numSets === 2) {
+                currentStatus.textContent = `当前: 二倍体 (2n=${baseSet})`;
+            } else if(numSets === 3) {
+                currentStatus.textContent = `当前: 三倍体 (3n=${chromosomeSetSize * 3})`;
+            } else if(numSets === 4) {
+                currentStatus.textContent = `当前: 四倍体 (4n=${chromosomeSetSize * 4})`;
+            } else {
+                currentStatus.textContent = `当前: ${currentCount}条染色体`;
+            }
+        }
+
+        // 更新变异结果显示 (仅在点击完成按钮后调用)
+        function updateVariationResult() {
+            const currentCount = document.querySelectorAll('#interactive-cell .chromosome').length;
+            const selectedValue = chromosomeSetSelect.value;
+            const baseSet = parseInt(selectedValue === 'tetraploid-8' ? '8' : selectedValue);
+            const chromosomeSetSize = baseSet / 2; // 染色体组大小
+            const numSets = currentCount / chromosomeSetSize;
+            const variation = currentCount - baseSet;
+
+            // 处理四倍体生物（4n=8）的特殊情况
+            if (selectedValue === 'tetraploid-8') {
+                if (currentCount === 8) {
+                    // 四倍体验证正确时，显示无变异和4n=8
+                    variationType.textContent = "无变异";
+                    variationType.className = "variation-normal";
+                    chromosomeComposition.textContent = "4n=8";
+                    return;
+                } else if (currentCount === 4) {
+                    // 四倍体生物的单倍体：2种染色体各2条，共4条
+                    variationType.textContent = "整倍体变异";
+                    variationType.className = "variation-euploidy";
+                    chromosomeComposition.textContent = "2n=4";
+                    return;
+                } else if (currentCount === 16) {
+                    // 四倍体生物的八倍体：2种染色体各8条，共16条
+                    variationType.textContent = "整倍体变异";
+                    variationType.className = "variation-euploidy";
+                    chromosomeComposition.textContent = "8n=16";
+                    return;
+                }
+            }
+
+            // 判断变异类型
+            if(currentCount === baseSet) {
+                variationType.textContent = "无变异";
+                variationType.className = "variation-normal";
+            } else if(currentCount % chromosomeSetSize === 0) {
+                variationType.textContent = "整倍体变异";
+                variationType.className = "variation-euploidy";
+            } else {
+                variationType.textContent = "非整倍体变异";
+                variationType.className = "variation-aneuploidy";
+            }
+
+            // 更新染色体组成显示
+            if(numSets === 1) {
+                chromosomeComposition.textContent = `n=${chromosomeSetSize}`;
+            } else if(numSets === 2) {
+                chromosomeComposition.textContent = `2n=${baseSet}`;
+            } else if(numSets === 3) {
+                chromosomeComposition.textContent = `3n=${chromosomeSetSize * 3}`;
+            } else if(numSets === 4) {
+                chromosomeComposition.textContent = `4n=${chromosomeSetSize * 4}`;
+            } else if(numSets === 8) {
+                chromosomeComposition.textContent = `8n=${chromosomeSetSize * 8}`;
+            } else if(variation > 0) {
+                chromosomeComposition.textContent = `2n+${variation}=${baseSet + variation}`;
+            } else {
+                chromosomeComposition.textContent = `2n${variation}=${baseSet + variation}`;
+            }
+        }
+        
+        // 金手指功能：自动完成第一阶段
+        function autoCompleteFirstStage() {
+            const selectedValue = chromosomeSetSelect.value;
+            const baseSet = parseInt(selectedValue === 'tetraploid-8' ? '8' : selectedValue);
+            if (baseSet <= 0) return;
+
+            // 清空当前细胞框
+            interactiveCell.innerHTML = '';
+            currentChromosomes = [];
+
+            // 直接生成满足判断的所需染色体
+            let chromosomeSetSize;
+            let chromosomesPerPair;
+
+            // 特殊处理四倍体(4n=8)
+            if (selectedValue === 'tetraploid-8') {
+                // 四倍体特殊逻辑：需要2种颜色、长短不同的染色体各4条
+                chromosomeSetSize = 2;
+                chromosomesPerPair = 4;
+            } else {
+                // 普通情况的处理逻辑
+                chromosomeSetSize = baseSet / 2;
+                chromosomesPerPair = 2;
+            }
+
+            // 为每个pair创建对应数量的染色体
+            for (let pair = 0; pair < chromosomeSetSize; pair++) {
+                for (let i = 0; i < chromosomesPerPair; i++) {
+                    const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                    const configIndex = pair % configs.length;
+                    // 为特殊染色体设置X/Y值
+                    let gender = ' ';
+                    if (isSpecialChromosome(selectedValue, pair)) {
+                        // 正常细胞中，特殊染色体应该有一个X和一个Y（男性）或两个X（女性）
+                        // 这里简单实现为第一个为X，第二个为Y或X（随机决定性别）
+                        if (i === 0) {
+                            gender = 'X';
+                        } else {
+                            gender = Math.random() > 0.5 ? 'Y' : 'X';
+                        }
+                    }
+                    const chromo = createChromosome(pair, nextId, configIndex, gender);
+                    interactiveCell.appendChild(chromo);
+                    currentChromosomes.push(parseInt(chromo.dataset.id));
+                    nextId++;
+                }
+            }
+
+            // 整理染色体布局
+            organizeChromosomes();
+            // 更新状态显示
+            updateStatusDisplay();
+        }
+
+        // 全局变量，用于跟踪当前选中的性别分支
+        window.selectedGender = null;
+        
+        // 完成按钮点击事件处理函数
+        function handleCompleteButtonClick() {
+            const selectedValue = chromosomeSetSelect.value;
+            const baseSet = parseInt(selectedValue === 'tetraploid-8' ? '8' : selectedValue);
+            const currentCount = document.querySelectorAll('#interactive-cell .chromosome').length;
+            const chromosomeSetSize = baseSet / 2;
+            let isCorrect = true;
+            const verificationResult = document.getElementById('verification-result');
+            const variationButtonsContainer = document.getElementById('variation-buttons-container');
+            // 获取按钮元素
+            const euploidyBtn = document.getElementById('euploidy-btn');
+            const aneuploidyBtn = document.getElementById('aneuploidy-btn');
+
+            // 检查是否已完成第一阶段（变异按钮是否显示）
+            if (variationButtonsContainer.style.display === 'flex') {
+                // 第二阶段：验证变异结果
+                if (selectedVariationType === null) {
+                    verificationResult.textContent = '未选择变异类型';
+                    verificationResult.style.color = 'orange';
+                    verificationResult.style.fontWeight = 'bold';
+                } else {
+                    // 根据选择的变异类型验证染色体组成
+                    isCorrect = verifyVariationByColor(selectedVariationType, chromosomeSetSize);
+                    
+                    if (isCorrect) {
+                        // 检查是否为21三体综合征
+                        if (selectedVariationType === 'trisomy' && window.is21Trisomy) {
+                            // 检查性染色体组合以区分男性和女性
+                            const genderChromosomes = {};
+                            document.querySelectorAll('#interactive-cell .chromosome').forEach(chromo => {
+                                const pairNum = parseInt(chromo.dataset.pair);
+                                // 检查是否为23号性染色体
+                                if (isSpecialChromosome(baseSet, pairNum)) {
+                                    const gender = chromo.dataset.gender || ' ';
+                                    if (!genderChromosomes[pairNum]) {
+                                        genderChromosomes[pairNum] = [];
+                                    }
+                                    genderChromosomes[pairNum].push(gender);
+                                }
+                            });
+
+                            // 检查23号染色体的性别组合
+                            let isMale = false;
+                            let isFemale = false;
+                            Object.keys(genderChromosomes).forEach(pairNum => {
+                                const genders = genderChromosomes[pairNum];
+                                const hasX = genders.includes('X');
+                                const hasY = genders.includes('Y');
+
+                                if (hasX && hasY && genders.length === 2) {
+                                    isMale = true;
+                                } else if (!hasY && genders.every(g => g === 'X') && genders.length === 2) {
+                                    isFemale = true;
+                                }
+                            });
+
+                            // 检查当前选中的21三体综合征按钮是属于男性还是女性分支
+                            let trisomyGender = null;
+                            const activeMaleTrisomyBtn = document.querySelector('#male-subbuttons .variation-subbtn:not([style*="background-color: rgb(204, 204, 204)"])');
+                            const activeFemaleTrisomyBtn = document.querySelector('#female-subbuttons .variation-subbtn:not([style*="background-color: rgb(204, 204, 204)"]):not(#female-btn2)');
+                            
+                            // 检查所有激活的按钮，确定性别分支
+                            const allActiveButtons = document.querySelectorAll('.variation-subbtn:not([style*="background-color: rgb(204, 204, 204)"])');
+                            allActiveButtons.forEach(btn => {
+                                if (btn.textContent.includes('21三体综合征')) {
+                                    if (btn.parentElement.id === 'male-subbuttons') {
+                                        trisomyGender = 'male';
+                                    } else if (btn.parentElement.id === 'female-subbuttons') {
+                                        trisomyGender = 'female';
+                                    }
+                                }
+                            });
+
+                            // 验证性染色体组合是否与按钮所属性别分支匹配
+                            let isValidTrisomy = true;
+                            
+                            // 检查是否有明确的性别分支要求且性别不匹配
+                            if (trisomyGender && ((trisomyGender === 'male' && !isMale) || (trisomyGender === 'female' && !isFemale))) {
+                                isValidTrisomy = false;
+                            }
+                            
+                            // 设置验证结果，只显示"正确"或"错误"
+                            if (isValidTrisomy) {
+                                verificationResult.textContent = '正确';
+                            } else {
+                                verificationResult.textContent = '错误，性别不匹配';
+                                verificationResult.style.color = 'red';
+                                verificationResult.style.fontWeight = 'bold';
+                                isCorrect = false;
+                            }
+                        } else {
+                            verificationResult.textContent = '正确';
+                        }
+                        verificationResult.style.color = 'green';
+                        verificationResult.style.fontWeight = 'bold';
+                        // 更新变异结果显示
+                        updateVariationResult();
+                    } else {
+                        verificationResult.textContent = '错误，再试一次';
+                        verificationResult.style.color = 'orange';
+                        verificationResult.style.fontWeight = 'bold';
+                    }
+                }
+            } else {
+                // 第一阶段：验证染色体组成是否正确
+                // 检查是否为四倍体生物（4n=8）的特殊情况
+                if (selectedValue === 'tetraploid-8') {
+                    // 四倍体特殊验证规则：2种颜色、长短不同的染色体各4条
+                    const pairs = {};
+                    document.querySelectorAll('#interactive-cell .chromosome').forEach(chromo => {
+                        const pairNum = chromo.dataset.pair;
+                        if(!pairs[pairNum]) {
+                            pairs[pairNum] = 0;
+                        }
+                        pairs[pairNum]++;
+                    });
+
+                    // 验证每对染色体都有4个
+                    isCorrect = Object.keys(pairs).length === 2 && 
+                              Object.values(pairs).every(count => count === 4) &&
+                              currentCount === 8;
+                } else {
+                    // 普通情况的验证
+                    // 检查是否所有染色体都成对
+                    const pairs = {};
+                    document.querySelectorAll('#interactive-cell .chromosome').forEach(chromo => {
+                        const pairNum = chromo.dataset.pair;
+                        if(!pairs[pairNum]) {
+                            pairs[pairNum] = 0;
+                        }
+                        pairs[pairNum]++;
+                    });
+
+                    // 验证每对染色体都有两个
+                    Object.values(pairs).forEach(count => {
+                        if(count !== 2) {
+                            isCorrect = false;
+                        }
+                    });
+
+                    // 验证染色体总数是否正确
+                    if(currentCount !== baseSet) {
+                        isCorrect = false;
+                    }
+
+                    // 验证特殊染色体的性别组合是否为XX或XY
+                    if (isCorrect) {
+                        // 获取所有染色体的性别信息
+                        const genderChromosomes = {};
+                        document.querySelectorAll('#interactive-cell .chromosome').forEach(chromo => {
+                            const pairNum = parseInt(chromo.dataset.pair);
+                            // 检查是否为特殊染色体
+                            if (isSpecialChromosome(baseSet, pairNum)) {
+                                const gender = chromo.dataset.gender || ' ';
+                                if (!genderChromosomes[pairNum]) {
+                                    genderChromosomes[pairNum] = [];
+                                }
+                                genderChromosomes[pairNum].push(gender);
+                            }
+                        });
+
+                        // 验证每个特殊染色体对的性别组合
+                        Object.keys(genderChromosomes).forEach(pairNum => {
+                            const genders = genderChromosomes[pairNum];
+                            // 检查性别组合是否为XX或XY
+                            const hasX = genders.includes('X');
+                            const hasY = genders.includes('Y');
+                            const hasOther = genders.some(g => g !== 'X' && g !== 'Y');
+
+                            // 只有XX或XY组合是有效的
+                            if (hasOther) {
+                                // 含有其他类型的染色体，无效
+                                isCorrect = false;
+                            } else if ((hasX && hasY && genders.length === 2) || 
+                                       (!hasY && genders.every(g => g === 'X') && genders.length === 2)) {
+                                // XY组合或XX组合，有效
+                            } else {
+                                // 其他情况，无效
+                                isCorrect = false;
+                            }
+                        });
+                    }
+                }
+
+                // 如果基本验证通过，检查染色体编号是否在允许范围内
+                if (isCorrect) {
+                    const selectedValue = document.getElementById('chromosome-set').value;
+                    let indexLimit = 0;
+                    
+                    // 根据分支设置indexlimit值
+                    if (selectedValue === '4') {
+                        indexLimit = 2; // 二倍体
+                    } else if (selectedValue === 'tetraploid-8') {
+                        indexLimit = 2; // 四倍体
+                    } else if (selectedValue === '8') {
+                        indexLimit = 4; // 果蝇
+                    } else if (selectedValue === '46') {
+                        indexLimit = 23; // 人类
+                    }
+                    
+                    // 检查所有染色体的编号是否小于等于indexlimit
+                    const allChromosomes = document.querySelectorAll('#interactive-cell .chromosome');
+                    for (const chromo of allChromosomes) {
+                        const pairNum = parseInt(chromo.dataset.pair);
+                        const displayedNumber = pairNum + 1; // 显示编号从1开始
+                        
+                        // 跳过性染色体（X/Y），它们不显示数字编号
+                        const gender = chromo.dataset.gender || ' ';
+                        if (gender === 'X' || gender === 'Y') {
+                            continue;
+                        }
+                        
+                        // 检查编号是否超过限制
+                        if (displayedNumber > indexLimit) {
+                            isCorrect = false;
+                            break;
+                        }
+                    }
+                }
+
+                // 更新变异结果显示
+                updateVariationResult();
+
+                // 显示验证结果和变异详情
+                const variationResultDetails = document.getElementById('variation-result-details');
+                if(isCorrect) {
+                    // 增加对应分支的计数器
+                    if (stage1SuccessCounters.hasOwnProperty(selectedValue)) {
+                        stage1SuccessCounters[selectedValue]++;
+                        console.log(`分支 ${selectedValue} 第一阶段验证成功次数: ${stage1SuccessCounters[selectedValue]}`);
+                    }
+                    
+                    // 存储当前细胞框内的染色体状态为状态a
+                    saveStateA();
+                    verificationResult.textContent = '正确';
+                    verificationResult.style.color = 'green';
+                    verificationResult.style.fontWeight = 'bold';
+                    // 隐藏一键模拟按钮
+                    const oneClickButton = document.getElementById('one-click-simulate');
+                    if (oneClickButton) {
+                        oneClickButton.style.display = 'none';
+                    }
+                    if (selectedValue === '8') {
+                        // 为果蝇隐藏问号帮助按钮
+                        document.getElementById('stage1-help-btn').style.display = 'none';
+                    }
+                    // 显示变异详情
+                    variationResultDetails.style.display = 'block';
+                    // 显示并生成正常细胞图
+                    generateNormalCellDiagram(baseSet);
+                    // 显示选择变异类型标签
+                    document.getElementById('variation-type-label').style.display = 'block';
+                    // 显示变异类型按钮
+                    variationButtonsContainer.style.display = 'flex';
+                    // 默认将整倍体按钮变灰
+                        euploidyBtn.style.backgroundColor = '#cccccc';
+                        euploidyBtn.style.color = '#666666';
+                        aneuploidyBtn.style.backgroundColor = '';
+                        aneuploidyBtn.style.color = '';
+                        
+                        // 添加男性和女性按钮的点击事件，设置当前选中的性别
+                        euploidyBtn.onclick = function() {
+                            window.selectedGender = 'male';
+                        };
+                        aneuploidyBtn.onclick = function() {
+                            window.selectedGender = 'female';
+                        };
+                    
+                    // 特殊处理四倍体生物：只显示整倍体变异按钮，隐藏非整倍体变异按钮
+                    if (selectedValue === 'tetraploid-8') {
+                        aneuploidyBtn.style.display = 'none';
+                    } else {
+                        aneuploidyBtn.style.display = 'block';
+                    }
+                    
+                    // 特殊处理人类（2n=46）分支
+                    if (selectedValue === '46') {
+                        // 保存原始按钮文本，用于后续恢复
+                        if (!window.originalEuploidyText) {
+                            window.originalEuploidyText = euploidyBtn.textContent;
+                            window.originalAneuploidyText = aneuploidyBtn.textContent;
+                        }
+                        
+                        // 修改按钮文本为男性和女性
+                        euploidyBtn.textContent = '男性';
+                        aneuploidyBtn.textContent = '女性';
+                        
+                        // 隐藏原来的所有下位按钮
+                        document.getElementById('euploidy-subbuttons').style.display = 'none';
+                        document.getElementById('aneuploidy-subbuttons').style.display = 'none';
+                        
+                        // 检查是否已创建新的下位按钮容器
+                        if (!document.getElementById('male-subbuttons')) {
+                            // 创建男性下位按钮容器
+                            const maleSubbuttons = document.createElement('div');
+                            maleSubbuttons.id = 'male-subbuttons';
+                            maleSubbuttons.className = 'subbuttons-container';
+                            maleSubbuttons.style.marginTop = '10px';
+                            maleSubbuttons.style.display = 'none';
+                            maleSubbuttons.style.width = '300px';
+                            
+                            // 添加三个下位按钮
+                            const btn1 = document.createElement('button');
+                            btn1.id = 'male-btn1';
+                            btn1.className = 'variation-subbtn';
+                            btn1.textContent = '21三体综合征';
+                            
+                            const btn2 = document.createElement('button');
+                            btn2.id = 'male-btn2';
+                            btn2.className = 'variation-subbtn';
+                            btn2.textContent = '克氏综合征(47,XXY)';
+                            
+                            const btn3 = document.createElement('button');
+                            btn3.id = 'male-btn3';
+                            btn3.className = 'variation-subbtn';
+                            btn3.textContent = '雅各布氏综合征(47,XYY)';
+                            
+                            maleSubbuttons.appendChild(btn1);
+                            maleSubbuttons.appendChild(btn2);
+                            maleSubbuttons.appendChild(btn3);
+                            
+                            // 添加到变异按钮总容器
+                            document.getElementById('variation-buttons-wrapper').appendChild(maleSubbuttons);
+                            
+                            // 创建女性下位按钮容器
+                            const femaleSubbuttons = document.createElement('div');
+                            femaleSubbuttons.id = 'female-subbuttons';
+                            femaleSubbuttons.className = 'subbuttons-container';
+                            femaleSubbuttons.style.marginTop = '10px';
+                            femaleSubbuttons.style.display = 'none';
+                            femaleSubbuttons.style.width = '300px';
+                            
+                            // 添加两个下位按钮
+                            const btn4 = document.createElement('button');
+                            btn4.id = 'female-btn1';
+                            btn4.className = 'variation-subbtn';
+                            btn4.textContent = '21三体综合征';
+                            
+                            const btn5 = document.createElement('button');
+                            btn5.id = 'female-btn2';
+                            btn5.className = 'variation-subbtn';
+                            btn5.textContent = '特纳综合征(45,X)'
+                            
+                            femaleSubbuttons.appendChild(btn4);
+                            femaleSubbuttons.appendChild(btn5);
+                            
+                            // 添加到变异按钮总容器
+                            document.getElementById('variation-buttons-wrapper').appendChild(femaleSubbuttons);
+                        }
+                    } else {
+                        // 非人类分支，恢复原始按钮文本
+                        if (window.originalEuploidyText && window.originalAneuploidyText) {
+                            euploidyBtn.textContent = window.originalEuploidyText;
+                            aneuploidyBtn.textContent = window.originalAneuploidyText;
+                        }
+                        
+                        // 隐藏人类分支特有的下位按钮
+                        if (document.getElementById('male-subbuttons')) {
+                            document.getElementById('male-subbuttons').style.display = 'none';
+                        }
+                        if (document.getElementById('female-subbuttons')) {
+                            document.getElementById('female-subbuttons').style.display = 'none';
+                        }
+                    }
+                    
+                    // 移除整倍体变异和非整倍体变异按钮及其所有下位按钮的选中状态（显示为灰色）
+                    euploidyBtn.style.backgroundColor = '#cccccc';
+                    euploidyBtn.style.color = '#666666';
+                    aneuploidyBtn.style.backgroundColor = '#cccccc';
+                    aneuploidyBtn.style.color = '#666666';
+                    
+                    // 移除所有下位按钮的选中状态
+                    const allSubbuttons = document.querySelectorAll('.variation-subbtn');
+                    allSubbuttons.forEach(btn => {
+                        btn.style.backgroundColor = '#cccccc';
+                        btn.style.color = '#666666';
+                    });
+                } else {
+                    verificationResult.textContent = '错误，再试一次';
+                    verificationResult.style.color = 'orange';
+                    verificationResult.style.fontWeight = 'bold';
+                    // 显示变异详情
+                    variationResultDetails.style.display = 'block';
+                    // 隐藏正常细胞图
+                    document.getElementById('normal-cell-container').style.display = 'none';
+                    // 隐藏变异类型按钮及下位按钮
+                    variationButtonsContainer.style.display = 'none';
+                    document.getElementById('euploidy-subbuttons').style.display = 'none';
+                    document.getElementById('aneuploidy-subbuttons').style.display = 'none';
+                    // 隐藏问号帮助按钮
+                    document.getElementById('variation-help-btn').style.display = 'none';
+                    // 重置变异类型和染色体组成显示
+                    document.getElementById('variation-type').textContent = '无变异';
+                    document.getElementById('variation-type').className = 'variation-normal';
+                    document.getElementById('chromosome-composition').textContent = '?n=?';
+                }
+            }
+        }
+
+        // 验证变异结果（不再基于颜色，而是基于染色体对）
+        function verifyVariationByColor(variationType, chromosomeSetSize) {
+            // 按染色体对分组统计染色体数量
+            const pairsCount = {};
+            document.querySelectorAll('#interactive-cell .chromosome').forEach(chromo => {
+                const pairNum = parseInt(chromo.dataset.pair);
+                pairsCount[pairNum] = (pairsCount[pairNum] || 0) + 1;
+            });
+            const pairsCountValues = Object.values(pairsCount);
+            const pairsCountKeys = Object.keys(pairsCount);
+
+            // 根据变异类型验证
+            let validationResult = false;
+            
+            if (variationType === 'haploid') {
+                const selectedValue = document.getElementById('chromosome-set').value;
+                if (selectedValue === 'tetraploid-8') {
+                    // 四倍体生物的单倍体：2种染色体各2条
+                    validationResult = Object.keys(pairsCount).length === 2 && 
+                           Object.values(pairsCount).every(count => count === 2);
+                } else {
+                    // 普通情况的单倍体：每个染色体对的染色体数量=1
+                    validationResult = pairsCountValues.every(count => count === 1);
+                }
+            } else if (variationType === 'triploid') {
+                // 三倍体：每个染色体对的染色体数量=3
+                validationResult = pairsCountValues.every(count => count === 3);
+            } else if (variationType === 'tetraploid') {
+                // 四倍体：每个染色体对的染色体数量=4
+                validationResult = pairsCountValues.every(count => count === 4);
+            } else if (variationType === 'octoploid') {
+                // 八倍体：2种染色体各8条
+                validationResult = Object.keys(pairsCount).length === 2 && 
+                       Object.values(pairsCount).every(count => count === 8);
+            } else if (variationType === 'trisomy') {
+                // 2n+1：任意一个染色体对的染色体数量=3，其余染色体对的染色体数量=2
+                let hasThree = false;
+                let othersAreTwo = true;
+                let trisomyPair = -1;
+                
+                // 找出三体的染色体对
+                for (const pair in pairsCount) {
+                    if (pairsCount[pair] === 3 && !hasThree) {
+                        hasThree = true;
+                        trisomyPair = parseInt(pair);
+                    } else if (pairsCount[pair] !== 2) {
+                        othersAreTwo = false;
+                    }
+                }
+                
+                // 检查是否是第21号染色体三体(注意：代码中染色体编号从0开始，第21号对应pair=20)
+                const is21Trisomy = trisomyPair === 20;
+                
+                // 存储是否为21三体的标志
+                window.is21Trisomy = is21Trisomy;
+                
+                // 对于人类分支（2n=46），必须限定在特定染色体上
+                const selectedValue = document.getElementById('chromosome-set').value;
+                if (selectedValue === '46') {
+                    // 检查是否选择了克氏综合征（47,XXY）
+                    const maleBtn2 = document.getElementById('male-btn2');
+                    const isKlinefelter = maleBtn2 && maleBtn2.style.backgroundColor !== 'rgb(204, 204, 204)';
+                    // 雅各布氏综合征(47,XYY)
+                    const maleBtn3 = document.getElementById('male-btn3');
+                    const isJacobson = maleBtn3 && maleBtn3.style.backgroundColor !== 'rgb(204, 204, 204)';
+                    // 检查23号染色体的具体组成是否为XXY
+                    const sexChromosomes = [];
+                    document.querySelectorAll('#interactive-cell .chromosome').forEach(chromo => {
+                        if (parseInt(chromo.dataset.pair) === 22) {
+                            sexChromosomes.push(chromo.dataset.gender || ' ');
+                        }
+                    });
+                    // 必须是XXY组合：两个X和一个Y
+                    const xCount = sexChromosomes.filter(g => g === 'X').length;
+                    const yCount = sexChromosomes.filter(g => g === 'Y').length;
+                    const isXXY = xCount === 2 && yCount === 1;
+                    const isXYY = xCount === 1 && yCount === 2;
+                    
+                    if (isKlinefelter) {
+                        // 克氏综合征必须限定在23号性染色体上（47,XXY）                        
+                        validationResult = hasThree && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize && trisomyPair === 22 && isXXY;
+                    } else if (isJacobson) {
+                        // 雅各布氏综合征必须限定在23号性染色体上（47,XYY）                        
+                        validationResult = hasThree && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize && trisomyPair === 22 && isXYY;
+                    } else {
+                        // 21三体综合征必须限定在第21号染色体上
+                        validationResult = hasThree && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize && trisomyPair === 20;
+                    }
+                } else {
+                    // 其他情况允许任意染色体三体
+                    validationResult = hasThree && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize;
+                }
+            } else if (variationType === 'monosomy') {
+                // 2n-1：任意一个染色体对的染色体数量=1，其余染色体对的染色体数量=2
+                let hasOne = false;
+                let othersAreTwo = true;
+                let monosomyPair = -1;
+                
+                // 找出单体型的染色体对
+                for (const pair in pairsCount) {
+                    if (pairsCount[pair] === 1 && !hasOne) {
+                        hasOne = true;
+                        monosomyPair = parseInt(pair);
+                    } else if (pairsCount[pair] !== 2) {
+                        othersAreTwo = false;
+                    }
+                }
+                
+                // 对于人类分支（2n=46），特纳综合征必须限定在23号性染色体上（pair=22，对应X染色体）
+                const selectedValue = document.getElementById('chromosome-set').value;
+                if (selectedValue === '46') {
+                    // 特纳综合征必须限定在23号性染色体上（45,X）
+                    validationResult = hasOne && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize && monosomyPair === 22;
+                } else {
+                    // 其他情况允许任意染色体单体型
+                    validationResult = hasOne && othersAreTwo && Object.keys(pairsCount).length === chromosomeSetSize;
+                }
+            }
+            
+            // 如果基本验证通过，检查染色体编号是否在允许范围内
+            if (validationResult) {
+                const selectedValue = document.getElementById('chromosome-set').value;
+                let indexLimit = 0;
+                
+                // 根据分支设置indexlimit值
+                if (selectedValue === '4') {
+                    indexLimit = 2; // 二倍体
+                } else if (selectedValue === 'tetraploid-8') {
+                    indexLimit = 2; // 四倍体
+                } else if (selectedValue === '8') {
+                    indexLimit = 4; // 果蝇
+                } else if (selectedValue === '46') {
+                    indexLimit = 23; // 人类
+                }
+                
+                // 检查所有染色体的编号是否小于等于indexlimit
+                const allChromosomes = document.querySelectorAll('#interactive-cell .chromosome');
+                for (const chromo of allChromosomes) {
+                    const pairNum = parseInt(chromo.dataset.pair);
+                    const displayedNumber = pairNum + 1; // 显示编号从1开始
+                    
+                    // 跳过性染色体（X/Y），它们不显示数字编号
+                    const gender = chromo.dataset.gender || ' ';
+                    if (gender === 'X' || gender === 'Y') {
+                        continue;
+                    }
+                    
+                    // 检查编号是否超过限制
+                    if (displayedNumber > indexLimit) {
+                        validationResult = false;
+                        break;
+                    }
+                }
+            }
+            
+            return validationResult;
+
+            // 移除调整容器高度的代码，避免细胞框移动
+        }
+
+        // 初始化变异按钮事件监听
+        function initVariationButtons() {
+            // 获取按钮元素
+            const euploidyBtn = document.getElementById('euploidy-btn');
+            const aneuploidyBtn = document.getElementById('aneuploidy-btn');
+            const euploidySubbuttons = document.getElementById('euploidy-subbuttons');
+            const aneuploidySubbuttons = document.getElementById('aneuploidy-subbuttons');
+            const haploidBtn = document.getElementById('haploid-btn');
+            const triploidBtn = document.getElementById('triploid-btn');
+            const tetraploidBtn = document.getElementById('tetraploid-btn');
+            const trisomyBtn = document.getElementById('trisomy-btn');
+            const monosomyBtn = document.getElementById('monosomy-btn');
+
+            // 整倍体变异按钮点击事件
+            euploidyBtn.addEventListener('click', function() {
+                // 设置左上角验证结果为未完成（灰色）
+                document.getElementById('verification-result').textContent = '未完成';
+                document.getElementById('verification-result').style.color = '#888888';
+                // 将非整倍体按钮颜色变灰
+                aneuploidyBtn.style.backgroundColor = '#cccccc';
+                aneuploidyBtn.style.color = '#666666';
+                // 恢复自身按钮颜色
+                euploidyBtn.style.backgroundColor = '';
+                euploidyBtn.style.color = '';
+                
+                // 特殊处理人类（2n=46）分支
+                const selectedValue = document.getElementById('chromosome-set').value;
+                const variationButtonsContainer = document.getElementById('variation-buttons-container');
+                
+                if (selectedValue === '46' && euploidyBtn.textContent === '男性') {
+                    // 隐藏原始的下位按钮
+                    euploidySubbuttons.style.display = 'none';
+                    aneuploidySubbuttons.style.display = 'none';
+                    
+                    // 显示男性特有的下位按钮
+                    if (document.getElementById('male-subbuttons')) {
+                        document.getElementById('male-subbuttons').style.display = 'flex';
+                    }
+                    // 隐藏女性特有的下位按钮
+                    if (document.getElementById('female-subbuttons')) {
+                        document.getElementById('female-subbuttons').style.display = 'none';
+                    }
+                } else if (selectedValue === 'tetraploid-8') {
+                    // 特殊处理四倍体生物：只显示单倍体按钮，按钮文本改为"单倍体"
+                    euploidySubbuttons.style.display = 'flex';
+                    aneuploidySubbuttons.style.display = 'none';
+                    
+                    // 保存原始文本以便切换回其他模式时恢复
+                    if (!window.haploidBtnOriginalText) {
+                        window.haploidBtnOriginalText = haploidBtn.textContent;
+                    }
+                    haploidBtn.textContent = '单倍体';
+                    haploidBtn.style.display = 'block';
+                    triploidBtn.style.display = 'none';
+                    tetraploidBtn.style.display = 'none';
+                } else if (selectedValue === '8' && variationButtonsContainer.style.display === 'flex') {
+                    // 特殊处理果蝇分支（2n=8）的第二阶段：隐藏四倍体按钮和非整倍体按钮
+                    euploidySubbuttons.style.display = 'flex';
+                    aneuploidySubbuttons.style.display = 'none';
+                    
+                    // 恢复原始按钮文本
+                    if (window.haploidBtnOriginalText) {
+                        haploidBtn.textContent = window.haploidBtnOriginalText;
+                    }
+                    haploidBtn.style.display = 'block';
+                    triploidBtn.style.display = 'block';
+                    tetraploidBtn.style.display = 'none'; // 在果蝇分支第二阶段隐藏四倍体按钮
+                    // 隐藏八倍体按钮（如果存在）
+                    const octoploidBtn = document.getElementById('octoploid-btn');
+                    if (octoploidBtn) {
+                        octoploidBtn.style.display = 'none';
+                    }
+                    
+                    // 隐藏人类分支特有的下位按钮
+                    if (document.getElementById('male-subbuttons')) {
+                        document.getElementById('male-subbuttons').style.display = 'none';
+                    }
+                    if (document.getElementById('female-subbuttons')) {
+                        document.getElementById('female-subbuttons').style.display = 'none';
+                    }
+                } else {
+                    // 普通情况：显示所有整倍体按钮
+                    euploidySubbuttons.style.display = 'flex';
+                    aneuploidySubbuttons.style.display = 'none';
+                    
+                    haploidBtn.style.display = 'block';
+                    // 恢复单倍体按钮的原始文本
+                    if (window.haploidBtnOriginalText) {
+                        haploidBtn.textContent = window.haploidBtnOriginalText;
+                    }
+                    triploidBtn.style.display = 'block';
+                    tetraploidBtn.style.display = 'block';
+                    // 隐藏八倍体按钮
+                    const octoploidBtn = document.getElementById('octoploid-btn');
+                    if (octoploidBtn) {
+                        octoploidBtn.style.display = 'none';
+                    }
+                    
+                    // 隐藏人类分支特有的下位按钮
+                    if (document.getElementById('male-subbuttons')) {
+                        document.getElementById('male-subbuttons').style.display = 'none';
+                    }
+                    if (document.getElementById('female-subbuttons')) {
+                        document.getElementById('female-subbuttons').style.display = 'none';
+                    }
+                }
+            });
+
+            // 非整倍体变异按钮点击事件
+            aneuploidyBtn.addEventListener('click', function() {
+                // 设置左上角验证结果为未完成（灰色）
+                document.getElementById('verification-result').textContent = '未完成';
+                document.getElementById('verification-result').style.color = '#888888';
+                // 将整倍体按钮颜色变灰
+                euploidyBtn.style.backgroundColor = '#cccccc';
+                euploidyBtn.style.color = '#666666';
+                // 恢复自身按钮颜色
+                aneuploidyBtn.style.backgroundColor = '';
+                aneuploidyBtn.style.color = '';
+                
+                // 特殊处理人类（2n=46）分支
+                const selectedValue = document.getElementById('chromosome-set').value;
+                if (selectedValue === '46' && aneuploidyBtn.textContent === '女性') {
+                    // 隐藏原始的下位按钮
+                    euploidySubbuttons.style.display = 'none';
+                    aneuploidySubbuttons.style.display = 'none';
+                    
+                    // 显示女性特有的下位按钮
+                    if (document.getElementById('female-subbuttons')) {
+                        document.getElementById('female-subbuttons').style.display = 'flex';
+                    }
+                    // 隐藏男性特有的下位按钮
+                    if (document.getElementById('male-subbuttons')) {
+                        document.getElementById('male-subbuttons').style.display = 'none';
+                    }
+                } else {
+                    // 普通情况：显示非整倍体按钮
+                    aneuploidySubbuttons.style.display = 'flex';
+                    euploidySubbuttons.style.display = 'none';
+                    
+                    // 隐藏人类分支特有的下位按钮
+                    if (document.getElementById('male-subbuttons')) {
+                        document.getElementById('male-subbuttons').style.display = 'none';
+                    }
+                    if (document.getElementById('female-subbuttons')) {
+                        document.getElementById('female-subbuttons').style.display = 'none';
+                    }
+                }
+            });
+
+            // 单倍体按钮点击事件
+            haploidBtn.addEventListener('click', function() {
+                restoreStateA(); // 先调用恢复按钮功能
+                selectedVariationType = 'haploid';
+                const selectedValue = document.getElementById('chromosome-set').value;
+                let baseSet;
+                if (selectedValue === 'tetraploid-8') {
+                    // 四倍体特殊情况：baseSet设置为8
+                    baseSet = 8;
+                    // 显示问号帮助按钮
+                    document.getElementById('variation-help-btn').style.display = 'inline-block';
+                } else {
+                    // 普通情况：直接解析值
+                    baseSet = parseInt(chromosomeSetSelect.value);
+                }
+                const chromosomeSetSize = baseSet / 2;
+                generateVariationChromosomes(chromosomeSetSize); // n
+                
+                
+                // 设置左上角验证结果为未完成（灰色）
+                document.getElementById('verification-result').textContent = '未完成';
+                document.getElementById('verification-result').style.color = '#888888';
+                // 将其他四个按钮变灰
+                triploidBtn.style.backgroundColor = '#cccccc';
+                triploidBtn.style.color = '#666666';
+                tetraploidBtn.style.backgroundColor = '#cccccc';
+                tetraploidBtn.style.color = '#666666';
+                trisomyBtn.style.backgroundColor = '#cccccc';
+                trisomyBtn.style.color = '#666666';
+                monosomyBtn.style.backgroundColor = '#cccccc';
+                monosomyBtn.style.color = '#666666';
+                
+                // 恢复自身按钮颜色
+                haploidBtn.style.backgroundColor = '';
+                haploidBtn.style.color = '';
+                
+            });
+
+            // 三倍体按钮点击事件
+            triploidBtn.addEventListener('click', function() {
+                restoreStateA(); // 先调用恢复按钮功能
+                selectedVariationType = 'triploid';
+                const selectedValue = document.getElementById('chromosome-set').value;
+                let baseSet;
+                if (selectedValue === 'tetraploid-8') {
+                    // 四倍体特殊情况：baseSet设置为8
+                    baseSet = 8;
+                } else {
+                    // 普通情况：直接解析值
+                    baseSet = parseInt(chromosomeSetSelect.value);
+                }
+                const chromosomeSetSize = baseSet / 2;
+                generateVariationChromosomes(chromosomeSetSize * 3); // 3n
+                
+                // 设置左上角验证结果为未完成（灰色）
+                document.getElementById('verification-result').textContent = '未完成';
+                document.getElementById('verification-result').style.color = '#888888';
+                // 将其他四个按钮变灰
+                haploidBtn.style.backgroundColor = '#cccccc';
+                haploidBtn.style.color = '#666666';
+                tetraploidBtn.style.backgroundColor = '#cccccc';
+                tetraploidBtn.style.color = '#666666';
+                trisomyBtn.style.backgroundColor = '#cccccc';
+                trisomyBtn.style.color = '#666666';
+                monosomyBtn.style.backgroundColor = '#cccccc';
+                monosomyBtn.style.color = '#666666';
+                
+                // 恢复自身按钮颜色
+                triploidBtn.style.backgroundColor = '';
+                triploidBtn.style.color = '';
+            });
+
+            // 四倍体按钮点击事件
+            tetraploidBtn.addEventListener('click', function() {
+                restoreStateA(); // 先调用恢复按钮功能
+                selectedVariationType = 'tetraploid';
+                const selectedValue = document.getElementById('chromosome-set').value;
+                let baseSet;
+                if (selectedValue === 'tetraploid-8') {
+                    // 四倍体特殊情况：baseSet设置为8
+                    baseSet = 8;
+                } else {
+                    // 普通情况：直接解析值
+                    baseSet = parseInt(chromosomeSetSelect.value);
+                }
+                if (selectedValue === '4') {
+                    // 显示问号帮助按钮
+                    document.getElementById('variation-help-btn').style.display = 'inline-block';
+                }
+                const chromosomeSetSize = baseSet / 2;
+                generateVariationChromosomes(chromosomeSetSize * 4); // 4n
+                
+                // 设置左上角验证结果为未完成（灰色）
+                document.getElementById('verification-result').textContent = '未完成';
+                document.getElementById('verification-result').style.color = '#888888';
+                // 将其他四个按钮变灰
+                haploidBtn.style.backgroundColor = '#cccccc';
+                haploidBtn.style.color = '#666666';
+                triploidBtn.style.backgroundColor = '#cccccc';
+                triploidBtn.style.color = '#666666';
+                trisomyBtn.style.backgroundColor = '#cccccc';
+                trisomyBtn.style.color = '#666666';
+                monosomyBtn.style.backgroundColor = '#cccccc';
+                monosomyBtn.style.color = '#666666';
+                
+                // 恢复自身按钮颜色
+                tetraploidBtn.style.backgroundColor = '';
+                tetraploidBtn.style.color = '';
+                
+            });
+
+            // 2n+1按钮点击事件
+            trisomyBtn.addEventListener('click', function() {
+                restoreStateA(); // 先调用恢复按钮功能
+                selectedVariationType = 'trisomy';
+                const selectedValue = document.getElementById('chromosome-set').value;
+                let baseSet;
+                if (selectedValue === 'tetraploid-8') {
+                    // 四倍体特殊情况：baseSet设置为8
+                    baseSet = 8;
+                } else {
+                    // 普通情况：直接解析值
+                    baseSet = parseInt(chromosomeSetSelect.value);
+                }
+                generateVariationChromosomes(baseSet + 1); // 2n+1
+                
+                // 设置左上角验证结果为未完成（灰色）
+                document.getElementById('verification-result').textContent = '未完成';
+                document.getElementById('verification-result').style.color = '#888888';
+                // 将其他四个按钮变灰
+                haploidBtn.style.backgroundColor = '#cccccc';
+                haploidBtn.style.color = '#666666';
+                triploidBtn.style.backgroundColor = '#cccccc';
+                triploidBtn.style.color = '#666666';
+                tetraploidBtn.style.backgroundColor = '#cccccc';
+                tetraploidBtn.style.color = '#666666';
+                monosomyBtn.style.backgroundColor = '#cccccc';
+                monosomyBtn.style.color = '#666666';
+                
+                // 恢复自身按钮颜色
+                trisomyBtn.style.backgroundColor = '';
+                trisomyBtn.style.color = '';
+            });
+
+            // 2n-1按钮点击事件
+            monosomyBtn.addEventListener('click', function() {
+                restoreStateA(); // 先调用恢复按钮功能
+                selectedVariationType = 'monosomy';
+                const selectedValue = document.getElementById('chromosome-set').value;
+                let baseSet;
+                if (selectedValue === 'tetraploid-8') {
+                    // 四倍体特殊情况：baseSet设置为8
+                    baseSet = 8;
+                } else {
+                    // 普通情况：直接解析值
+                    baseSet = parseInt(chromosomeSetSelect.value);
+                }
+                generateVariationChromosomes(baseSet - 1); // 2n-1
+                
+                // 设置左上角验证结果为未完成（灰色）
+                document.getElementById('verification-result').textContent = '未完成';
+                document.getElementById('verification-result').style.color = '#888888';
+                // 将其他四个按钮变灰
+                haploidBtn.style.backgroundColor = '#cccccc';
+                haploidBtn.style.color = '#666666';
+                triploidBtn.style.backgroundColor = '#cccccc';
+                triploidBtn.style.color = '#666666';
+                tetraploidBtn.style.backgroundColor = '#cccccc';
+                tetraploidBtn.style.color = '#666666';
+                trisomyBtn.style.backgroundColor = '#cccccc';
+                trisomyBtn.style.color = '#666666';
+                
+                // 恢复自身按钮颜色
+            monosomyBtn.style.backgroundColor = '';
+            monosomyBtn.style.color = '';
+        });
+
+        // 为人类分支的五个下位按钮添加点击事件处理函数
+        // 监听人类分支特有的按钮容器的创建
+        function setupHumanBranchButtons() {
+            const maleSubbuttons = document.getElementById('male-subbuttons');
+            const femaleSubbuttons = document.getElementById('female-subbuttons');
+            
+            // 确保按钮容器存在
+            if (maleSubbuttons && femaleSubbuttons) {
+                // 获取男性分支的三个按钮
+                const maleBtn1 = document.getElementById('male-btn1'); // aaa
+                const maleBtn2 = document.getElementById('male-btn2'); // bbb
+                const maleBtn3 = document.getElementById('male-btn3'); // ccc
+                
+                // 获取女性分支的两个按钮
+                const femaleBtn1 = document.getElementById('female-btn1'); // ddd
+                const femaleBtn2 = document.getElementById('female-btn2'); // eee
+                
+                // 为aaa、bbb、ccc、ddd添加点击事件处理（动作A：2n+1）
+                const actionA = function() {
+                    restoreStateA(); // 先调用恢复按钮功能
+                    selectedVariationType = 'trisomy';
+                    const baseSet = parseInt(chromosomeSetSelect.value);
+                    generateVariationChromosomes(baseSet + 1); // 2n+1
+                    
+                    // 设置左上角验证结果为未完成（灰色）
+                    document.getElementById('verification-result').textContent = '未完成';
+                    document.getElementById('verification-result').style.color = '#888888';
+                    
+                    // 将同一组的其他按钮变灰
+                    const parentContainer = this.parentElement;
+                    const siblingButtons = parentContainer.querySelectorAll('.variation-subbtn');
+                    siblingButtons.forEach(btn => {
+                        btn.style.backgroundColor = '#cccccc';
+                        btn.style.color = '#666666';
+                    });
+                    
+                    // 将另一组的按钮也变灰
+                    const otherGroup = parentContainer.id === 'male-subbuttons' ? 
+                        document.getElementById('female-subbuttons') : 
+                        document.getElementById('male-subbuttons');
+                    if (otherGroup) {
+                        const otherButtons = otherGroup.querySelectorAll('.variation-subbtn');
+                        otherButtons.forEach(btn => {
+                            btn.style.backgroundColor = '#cccccc';
+                            btn.style.color = '#666666';
+                        });
+                    }
+                    
+                    // 恢复自身按钮颜色
+                    this.style.backgroundColor = '';
+                    this.style.color = '';
+
+                    // 显示问号帮助按钮
+                    document.getElementById('variation-help-btn').style.display = 'inline-block';
+                };
+                
+                // 为eee添加点击事件处理（动作B：2n-1）
+                const actionB = function() {
+                    restoreStateA(); // 先调用恢复按钮功能
+                    selectedVariationType = 'monosomy';
+                    const baseSet = parseInt(chromosomeSetSelect.value);
+                    generateVariationChromosomes(baseSet - 1); // 2n-1
+                    
+                    // 设置左上角验证结果为未完成（灰色）
+                    document.getElementById('verification-result').textContent = '未完成';
+                    document.getElementById('verification-result').style.color = '#888888';
+                    
+                    // 将同一组的其他按钮变灰
+                    const parentContainer = this.parentElement;
+                    const siblingButtons = parentContainer.querySelectorAll('.variation-subbtn');
+                    siblingButtons.forEach(btn => {
+                        btn.style.backgroundColor = '#cccccc';
+                        btn.style.color = '#666666';
+                    });
+                    // 将另一组的按钮也变灰
+                    const otherGroup = parentContainer.id === 'male-subbuttons' ? 
+                        document.getElementById('female-subbuttons') : 
+                        document.getElementById('male-subbuttons');
+                    if (otherGroup) {
+                        const otherButtons = otherGroup.querySelectorAll('.variation-subbtn');
+                        otherButtons.forEach(btn => {
+                            btn.style.backgroundColor = '#cccccc';
+                            btn.style.color = '#666666';
+                        });
+                    }
+                    
+                    // 恢复自身按钮颜色
+                    this.style.backgroundColor = '';
+                    this.style.color = '';
+                    
+                    // 显示问号帮助按钮
+                    document.getElementById('variation-help-btn').style.display = 'inline-block';
+                };
+                
+                // 绑定事件处理函数
+                if (maleBtn1) maleBtn1.addEventListener('click', actionA);
+                if (maleBtn2) maleBtn2.addEventListener('click', actionA);
+                if (maleBtn3) maleBtn3.addEventListener('click', actionA);
+                if (femaleBtn1) femaleBtn1.addEventListener('click', actionA);
+                if (femaleBtn2) femaleBtn2.addEventListener('click', actionB);
+            } else {
+                // 如果按钮容器不存在，稍后再尝试设置
+                setTimeout(setupHumanBranchButtons, 100);
+            }
+        }
+        
+        // 初始化设置人类分支按钮
+        setupHumanBranchButtons();
+    }
+
+        // 保存当前细胞框内的染色体状态为状态a（可通过恢复按钮重新加载）
+        function saveStateA() {
+            const interactiveCell = document.getElementById('interactive-cell');
+            const chromosomes = document.querySelectorAll('#interactive-cell .chromosome');
+            const stateA = [];
+
+            // 保存细胞框大小
+            const cellWidth = interactiveCell.offsetWidth;
+            const cellHeight = interactiveCell.offsetHeight;
+            stateA.push({ type: 'cellSize', width: cellWidth, height: cellHeight });
+            
+            chromosomes.forEach(chromo => {
+                const rect = chromo.getBoundingClientRect();
+                const cellRect = interactiveCell.getBoundingClientRect();
+                
+                stateA.push({
+                    id: parseInt(chromo.dataset.id),
+                    pair: parseInt(chromo.dataset.pair),
+                    color: chromo.querySelector('.chromosome-arm').style.backgroundColor,
+                    x: rect.left - cellRect.left,
+                    y: rect.top - cellRect.top,
+                    gender: chromo.dataset.gender || ' '  // 添加gender属性
+                });
+            });
+            
+            // 存储到全局变量
+            window.stateA = stateA;
+            console.log('状态a已保存', stateA);
+        }
+        
+        // 通过恢复按钮调用，将细胞框内的染色体恢复到状态a
+        function restoreStateA() {
+            if(!window.stateA) return;
+
+            const interactiveCell = document.getElementById('interactive-cell');
+            // 清空细胞和染色体池
+            interactiveCell.innerHTML = '';
+            chromosomePool.innerHTML = '';
+            currentChromosomes = [];
+            nextId = 0;
+            
+            // 恢复细胞框大小
+            window.stateA.forEach(item => {
+                if (item.type === 'cellSize') {
+                    interactiveCell.style.width = `${item.width}px`;
+                    interactiveCell.style.height = `${item.height}px`;
+                    return;
+                }
+            });
+
+            // 恢复染色体
+            window.stateA.forEach(chromoData => {
+                if (chromoData.type === 'cellSize') return; // 跳过细胞大小记录
+                // 查找对应的染色体配置
+                const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                const configIndex = chromoData.pair % configs.length;
+                // 使用保存的gender属性
+                const chromo = createChromosome(chromoData.pair, chromoData.id, configIndex, chromoData.gender || ' ');
+                
+                // 确保染色体容器有定位上下文
+                interactiveCell.style.position = 'relative';
+                
+                // 设置位置
+                chromo.style.position = 'absolute';
+                chromo.style.left = `${chromoData.x}px`;
+                chromo.style.top = `${chromoData.y}px`;
+                chromo.style.margin = '0'; // 移除可能的margin影响
+                chromo.style.zIndex = '10'; // 确保染色体显示在正确层级
+                
+                // 确保染色体颜色正确
+                const arms = chromo.querySelectorAll('.chromosome-arm');
+                arms.forEach(arm => {
+                    arm.style.backgroundColor = chromoData.color;
+                });
+                
+                // 添加到细胞
+                interactiveCell.appendChild(chromo);
+                currentChromosomes.push(chromoData.id);
+                nextId = Math.max(nextId, chromoData.id + 1);
+            });
+            
+            // 整理染色体布局，确保与正常细胞图一致
+            organizeChromosomes();
+            
+            // 清除验证结果
+            document.getElementById('verification-result').textContent = '';
+            
+            // 更新状态显示
+            updateStatusDisplay();
+            
+            // 隐藏问号帮助按钮
+            document.getElementById('variation-help-btn').style.display = 'none';
+        }
+        
+        // 生成变异染色体
+        function generateVariationChromosomes(targetCount) {
+            const chromosomePool = document.getElementById('chromosome-pool');
+            chromosomePool.innerHTML = ''; // 清空染色体池
+            const selectedValue = document.getElementById('chromosome-set').value;
+            let baseSet;
+            if (selectedValue === 'tetraploid-8') {
+                // 四倍体特殊情况：baseSet设置为8
+                baseSet = 8;
+            } else {
+                // 普通情况：直接解析值
+                baseSet = parseInt(chromosomeSetSelect.value);
+            }
+            const chromosomeSetSize = baseSet / 2;
+
+            // 存储所有创建的染色体
+            const allChromosomes = [];
+            let createdCount = 0;
+
+            // 生成主要染色体（满足变异类型的基本数量）
+            for(let pair = 0; pair < chromosomeSetSize; pair++) {
+                // 计算该配对需要的染色体数量
+                const pairCount = Math.floor(targetCount / chromosomeSetSize);
+                for(let i = 0; i < pairCount; i++) {
+                    if(createdCount >= targetCount) break;
+                    const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                    const configIndex = pair % configs.length;
+                    // 为特殊染色体设置X/Y值
+                    let gender = ' ';
+                    if (isSpecialChromosome(selectedValue, pair)) {
+                        // 随机分配X或Y，概率各50%
+                        gender = Math.random() > 0.5 ? 'X' : 'Y';
+                    }
+                    const chromo = createChromosome(pair, nextId, configIndex, gender);
+                    chromo.classList.add('chromosome-outside');
+                    allChromosomes.push(chromo);
+                    nextId++;
+                    createdCount++;
+                }
+            }
+            // 如果还有剩余需要创建的染色体
+            while(createdCount < targetCount) {
+                const pair = Math.floor(Math.random() * chromosomeSetSize);
+                const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                const configIndex = pair % configs.length;
+                // 为特殊染色体设置X/Y值
+                let gender = ' ';
+                if (isSpecialChromosome(selectedValue, pair)) {
+                    gender = Math.random() > 0.5 ? 'X' : 'Y';
+                }
+                const chromo = createChromosome(pair, nextId, configIndex, gender);
+                chromo.classList.add('chromosome-outside');
+                allChromosomes.push(chromo);
+                nextId++;
+                createdCount++;
+            }
+
+            // 随机增加其他染色体作为干扰
+            let extraPercentage = 0.15; // 默认15%
+            
+            
+            const extraCount = Math.ceil(targetCount * extraPercentage);
+            for(let i = 0; i < extraCount; i++) {
+                // 使用不同的配对编号范围来确保形态不同
+                const pair = chromosomeSetSize + Math.floor(Math.random() * chromosomeSetSize);
+                const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                const configIndex = pair % configs.length;
+                // 为特殊染色体设置X/Y值
+                let gender = ' ';
+                if (isSpecialChromosome(selectedValue, pair)) {
+                    gender = Math.random() > 0.5 ? 'X' : 'Y';
+                }
+                const chromo = createChromosome(pair, nextId, configIndex, gender);
+                chromo.classList.add('chromosome-outside');
+                allChromosomes.push(chromo);
+                nextId++;
+            }
+
+            // 为人类分支增加一对23号染色体 - 仅在人类分支执行
+            if (selectedValue === '46') {
+                const extra23 = 2;
+                for(let i = 0; i < extra23; i++) {
+                    // 使用不同的配对编号范围来确保形态不同
+                    const pair = 22;
+                    const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['46'];
+                    const configIndex = pair % configs.length;
+                    // 为特殊染色体设置X/Y值
+                    let gender = ' ';
+                    if (i===0) {
+                        gender = 'X' 
+                    }
+                    else{
+                        gender = 'Y' 
+                    }
+                    const chromo = createChromosome(pair, nextId, configIndex, gender);
+                    chromo.classList.add('chromosome-outside');
+                    allChromosomes.push(chromo);
+                    nextId++;
+                }
+            }
+
+            // 为果蝇分支增加一对1号染色体 - 仅在果蝇分支执行
+            if (selectedValue === '8') {
+                const extra1 = 2;
+                for(let i = 0; i < extra1; i++) {
+                    // 使用配对编号0来表示果蝇1号染色体
+                    const pair = 0;
+                    const configs = chromosomeConfigs[currentChromosomeSet] || chromosomeConfigs['8'];
+                    const configIndex = pair % configs.length;
+                    // 为特殊染色体设置性别值
+                    let gender = ' ';
+                    if (i===0) {
+                        gender = 'X'
+                    }
+                    else{
+                        gender = 'Y'
+                    }
+                    const chromo = createChromosome(pair, nextId, configIndex, gender);
+                    chromo.classList.add('chromosome-outside');
+                    allChromosomes.push(chromo);
+                    nextId++;
+                }
+            }
+
+            // 随机打乱染色体顺序
+            allChromosomes.sort(() => Math.random() - 0.5);
+
+            // 将染色体添加到染色体池
+            allChromosomes.forEach(chromo => {
+                chromosomePool.appendChild(chromo);
+            });
+
+            //// 添加完成按钮
+            //const completeButton = document.createElement('button');
+            //completeButton.id = 'complete-button';
+            //completeButton.className = 'complete-btn';
+            //completeButton.textContent = '完成';
+            //completeButton.addEventListener('click', function() {
+            //    handleCompleteButtonClick();
+            //});
+            //chromosomePool.appendChild(completeButton);
+
+            // 初始化拖拽功能
+            initDragAndDrop();
+            // 整理染色体池
+            organizeChromosomePool();
+        }
+
+        // 生成正常细胞图
+        function generateNormalCellDiagram(baseSet) {
+            const normalCellContainer = document.getElementById('normal-cell-container');
+            const normalCellDiagram = document.getElementById('normal-cell-diagram');
+            normalCellDiagram.innerHTML = '';
+            normalCellContainer.style.display = 'block';
+
+            const selectedValue = document.getElementById('chromosome-set').value;
+            
+            // 确定染色体组数和每个pair需要创建的染色体数量
+            let chromosomeSetSize = baseSet / 2; // 染色体组大小
+            let chromosomePerPair = 2;
+            
+            if (selectedValue === 'tetraploid-8') {
+                // 四倍体特殊情况：染色体组数改为2组，每个pair创建4个染色体
+                chromosomeSetSize = 2;
+                chromosomePerPair = 4;
+            }
+
+            // 为每个pair创建对应数量的染色体
+            for(let pair = 0; pair < chromosomeSetSize; pair++) {
+                for(let i = 0; i < chromosomePerPair; i++) {
+                    // 不再需要计算configIndex，createStaticChromosome函数现在使用getChromosomeConfig获取配置
+                    // 为特殊染色体设置X/Y值
+                    let gender = ' ';
+                    if (isSpecialChromosome(selectedValue, pair)) {
+                        // 如果有保存的状态A，使用其中的染色体性别属性
+                        if (window.stateA && window.stateA.length > 1) {
+                            // 过滤出状态A中该pair的染色体
+                            const pairChromosomes = window.stateA.filter(chromo => 
+                                chromo.type !== 'cellSize' && chromo.pair === pair
+                            );
+                            // 如果有该pair的染色体，使用其性别属性
+                            if (pairChromosomes.length > i) {
+                                gender = pairChromosomes[i].gender || ' ';
+                            } else {
+                                // 如果没有足够的染色体，使用默认逻辑
+                                if (i === 0) {
+                                    gender = 'X';
+                                } else {
+                                    gender = Math.random() > 0.5 ? 'Y' : 'X';
+                                }
+                            }
+                        } else {
+                            // 正常细胞中，23号染色体应该有一个X和一个Y（男性）或两个X（女性）
+                            // 这里简单实现为第一个为X，第二个为Y或X（随机决定性别）
+                            if (i === 0) {
+                                gender = 'X';
+                            } else {
+                                gender = Math.random() > 0.5 ? 'Y' : 'X';
+                            }
+                        }
+                    }
+                    // 传递undefined作为configIndex参数
+                    const chromo = createStaticChromosome(pair, undefined, gender);
+                    normalCellDiagram.appendChild(chromo);
+                }
+            }
+        }
+
+        // 创建静态染色体元素
+        function createStaticChromosome(pairNum, configIndex, gender = ' ') {
+            // 使用新的配置获取方式，根据当前分支和性别获取配置
+            const config = getChromosomeConfig(pairNum, gender);
+
+            const chromo = document.createElement('div');
+            chromo.className = 'static-chromosome';
+            chromo.dataset.pair = pairNum;
+            chromo.dataset.gender = gender; // 添加性别属性
+
+            const chromoBody = document.createElement('div');
+            chromoBody.className = 'chromosome-body';
+
+            const longArm = document.createElement('div');
+            longArm.className = 'chromosome-arm';
+            longArm.style.width = '12px'; // 缩放为原来的80%
+            longArm.style.height = `${config.longArm * 0.56}px`; // 缩放为原来的80%
+            longArm.style.backgroundColor = config.color;
+            longArm.style.borderRadius = '10px 10px 0 0';
+
+            const centromere = document.createElement('div');
+            centromere.className = 'centromere';
+            centromere.style.width = '8px';
+            centromere.style.height = '8px';
+            centromere.style.backgroundColor = config.centromereBg || '#d3d3d3';
+            centromere.style.border = `2.4px solid ${config.centromereBorder || '#bebebe'}`;
+
+            const shortArm = document.createElement('div');
+            shortArm.className = 'chromosome-arm';
+            shortArm.style.width = '12px'; // 缩放为原来的80%
+            shortArm.style.height = `${config.shortArm * 0.56}px`; // 缩放为原来的80%
+            shortArm.style.backgroundColor = config.color;
+            shortArm.style.borderRadius = '0 0 10px 10px';
+
+            chromoBody.appendChild(longArm);
+            chromoBody.appendChild(centromere);
+            chromoBody.appendChild(shortArm);
+            chromo.appendChild(chromoBody);
+
+            // 如果有性别属性，为静态染色体也添加标签显示
+            if (gender === 'X' || gender === 'Y') {
+                const label = document.createElement('div');
+                label.className = 'chromosome-label';
+                label.style.fontSize = '8px'; // 静态染色体标签更小
+                label.textContent = gender; // 只显示性别字符，替换编号
+                chromo.appendChild(label);
+            }
+
+            return chromo;
+        }
+
+                // 此部分代码已重复，已移除
+
+        // 调整容器高度以适应内容
+        function adjustContainerHeights() {
+            // 调整细胞框高度
+            const cellDiagram = document.getElementById('interactive-cell');
+            const cellContentHeight = cellDiagram.scrollHeight;
+            if(cellContentHeight > 400) {
+                cellDiagram.style.height = `${cellContentHeight}px`;
+            }
+
+            // 调整染色体池高度
+            const chromosomePool = document.getElementById('chromosome-pool');
+            const poolContentHeight = chromosomePool.scrollHeight;
+            if(poolContentHeight > 400) {
+                chromosomePool.style.height = `${poolContentHeight}px`;
+            }
+        }
+        
+        // 判断是否为特殊染色体（人类23号染色体或果蝇性染色体）
+        function isSpecialChromosome(setValue, pairNum) {
+            // 处理baseSet数字类型和selectedValue字符串类型
+            const setValueNum = typeof setValue === 'string' ? parseInt(setValue) : setValue;
+            // 人类23号染色体(index 22)或果蝇性染色体(index 0)
+            return (setValueNum === 46 && pairNum === 22) || (setValueNum === 8 && pairNum === 0);
+        }
+
+        // 添加调试日志
+        console.log('页面加载完成，准备初始化模拟器');
+        console.log('染色体配置:', chromosomeConfigs);
+        console.log('基础染色体数量:', baseChromosomeCount);
+
+        // 更新状态显示 (仅更新控制面板状态，不更新变异结果)
+        function updateStatusDisplay() {
+            // 控制面板状态显示已被移除，此函数现在为空
+        }
+
+        // 显示第一阶段帮助浮窗
+        function showStage1HelpPopup() {
+            // 获取当前选中的染色体组和变异类型
+            const selectedValue = document.getElementById('chromosome-set').value;
+            let helpText = '';
+            // 根据不同的调用情况显示不同的文本
+            if (selectedValue === '8') {
+                // 情况(a): 果蝇分支
+                helpText = "果蝇的四号染色体因其臂极短，与着丝粒融合，在光学显微镜下呈现为圆点状。";
+            } else {
+                // 默认情况
+                helpText = "帮助信息";
+            }
+            // 获取问号按钮的位置
+            const helpBtn = document.getElementById('stage1-help-btn');
+            const btnRect = helpBtn.getBoundingClientRect();
+            
+            // 创建浮窗元素
+            const popup = document.createElement('div');
+            popup.id = 'help-popup';
+            popup.style.position = 'absolute';
+            popup.style.top = btnRect.top + 'px';
+            popup.style.left = btnRect.left + 'px';
+            popup.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
+            popup.style.borderRadius = '8px';
+            popup.style.padding = '20px';
+            popup.style.zIndex = '1000';
+            popup.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+            popup.style.maxWidth = '400px';
+            popup.style.fontSize = '14px';
+            popup.style.lineHeight = '1.5';
+            popup.innerHTML = '<div style="font-weight: bold; font-size: 13px; margin-bottom: 10px; color: #333;">\< 知识点 \></div>' + helpText;
+            
+            // 添加到页面
+            document.body.appendChild(popup);
+            
+            // 鼠标移出浮窗时关闭
+            popup.addEventListener('mouseleave', function() {
+                document.body.removeChild(popup);
+            });
+        }
+
+        // 显示帮助浮窗
+        function showHelp2Popup() {
+            // 获取当前选中的染色体组和变异类型
+            const selectedValue = document.getElementById('chromosome-set').value;
+            const variationType = selectedVariationType;
+            
+            let helpText = '';
+            // 根据不同的调用情况显示不同的文本
+            if (selectedValue === 'tetraploid-8' && variationType === 'haploid') {
+                // 情况(a): 四倍体分支第二阶段-整倍体变异-单倍体选中
+                helpText = "单倍体细胞内的染色体组数为正常细胞的一半，即其配子的染色体组成。";
+            } else if (variationType === 'tetraploid') {
+                // 情况(b): 二倍体分支第二阶段-整倍体变异-选中四倍体
+                helpText = "使用秋水仙素，可使植物细胞染色体数目加倍（作用原理：抑制细胞有丝分裂过程中纺锤体的形成，从而使染色体数目加倍）。<br>应用：植物的多倍体育种。";
+            } else if (selectedValue === '46' && variationType === 'trisomy' && document.getElementById('male-btn1') && document.getElementById('male-btn1').style.backgroundColor !== 'rgb(204, 204, 204)' && document.getElementById('male-subbuttons') && document.getElementById('male-subbuttons').style.display === 'flex') {
+                // 情况(c): 人类分支第二阶段-男性-21三体综合征选中
+                helpText = "21三体综合征：智力障碍，特殊面容，先天性心脏病";
+            } else if (selectedValue === '46' && variationType === 'trisomy' && document.getElementById('male-btn2') && document.getElementById('male-btn2').style.backgroundColor !== 'rgb(204, 204, 204)') {
+                // 情况(d): 人类分支第二阶段-男性-克氏综合征(47,XXY)选中
+                helpText = "克氏综合征：男性不育，睾丸小，雄性激素缺乏，身材高大";
+            } else if (selectedValue === '46' && variationType === 'trisomy' && document.getElementById('male-btn3') && document.getElementById('male-btn3').style.backgroundColor !== 'rgb(204, 204, 204)') {
+                // 情况(e): 人类分支第二阶段-男性-雅各布氏综合征(47,XYY)选中
+                helpText = "雅各布氏综合征：身材高大，多数正常。现代科学共识：绝大多数47, XYY男性在行为上是正常的，没有明显的攻击性或反社会倾向。";
+            } else if (selectedValue === '46' && variationType === 'trisomy' && document.getElementById('female-btn1') && document.getElementById('female-btn1').style.backgroundColor !== 'rgb(204, 204, 204)' && document.getElementById('female-subbuttons') && document.getElementById('female-subbuttons').style.display === 'flex') {
+                // 情况(f): 人类分支第二阶段-女性-21三体综合征选中
+                helpText = "21三体综合征：智力障碍，特殊面容，先天性心脏病";
+            } else if (selectedValue === '46' && variationType === 'monosomy' && document.getElementById('female-btn2') && document.getElementById('female-btn2').style.backgroundColor !== 'rgb(204, 204, 204)') {
+                // 情况(g): 人类分支第二阶段-女性-特纳综合征选中
+                helpText = "特纳综合征：女性身材矮小，性腺发育不全，不孕";
+            } else {
+                // 默认情况
+                helpText = "帮助信息";
+            }
+            
+            // 获取问号按钮的位置
+            const helpBtn = document.getElementById('variation-help-btn');
+            const btnRect = helpBtn.getBoundingClientRect();
+            
+            // 创建浮窗元素
+            const popup = document.createElement('div');
+            popup.id = 'help-popup';
+            popup.style.position = 'absolute';
+            popup.style.top = btnRect.top + 'px';
+            popup.style.left = btnRect.left + 'px';
+            popup.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
+            //popup.style.border = '2px solid #333';
+            popup.style.borderRadius = '8px';
+            popup.style.padding = '20px';
+            popup.style.zIndex = '1000';
+            popup.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+            popup.style.maxWidth = '400px';
+            popup.style.fontSize = '14px';
+            popup.style.lineHeight = '1.5';
+            popup.innerHTML = '<div style="font-weight: bold; font-size: 13px; margin-bottom: 10px; color: #333;">\< 知识点 \></div>' + helpText;
+            
+            // 添加到页面
+            document.body.appendChild(popup);
+            
+            // 鼠标移出浮窗时关闭
+            popup.addEventListener('mouseleave', function() {
+                document.body.removeChild(popup);
+            });
+        }
+        
+        // 初始化模拟器
+        window.onload = function() {
+            console.log('开始初始化模拟器');
+            initSimulator();
+            initVariationButtons();
+            // 初始化完成按钮事件监听
+            document.getElementById('complete-button').addEventListener('click', function() {
+                handleCompleteButtonClick();
+            });
+            // 初始化问号帮助按钮事件监听
+            document.getElementById('variation-help-btn').addEventListener('click', function() {
+                showHelp2Popup();
+            });
+            // 初始化第一阶段帮助按钮事件监听
+            document.getElementById('stage1-help-btn').addEventListener('click', function() {
+                showStage1HelpPopup();
+            });
+            console.log('模拟器初始化完成');
+        };
+    </script>
+    <!-- 底部信息 -->
+    <div id="footer" style="text-align: center; padding: 10px; background-color: transparent; border-top: 1px solid transparent; margin-top: 20px;">
+        <p style="margin: 0; padding: 2px 0; font-size: 12px; color: #888888;"><strong>制作者：朱熠韡</strong>，上海市第二中学， 2025年9月 </p>
+        <p style="margin: 0; padding: 2px 0; font-size: 12px; color: #888888;">支持单位：华东师大《生物学教学》杂志社、教育部“双名计划”闫白洋工作室、上海市高峰计划生物学工作室、上海市普陀区卓越教师工作室</p>
+    </div>
+
+</body>
+</html>
